@@ -7,6 +7,7 @@
 <title>Követek — App prototípus</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://www.youtube.com/iframe_api"></script>
 <style>
   :root{
     --green-dark:#1F3A0D;
@@ -96,10 +97,10 @@
     position:absolute;
     left:50%;
     top:50%;
-    transform:translate(-50%, -50%) scale(1.8);
+    transform:translate(-50%, -50%) scale(1.0);
     max-height:100%;
     width: auto !important;
-    height: 110px;
+    height: 90px;
     aspect-ratio: 1/1;
     object-fit:cover;
     margin-top: 5px;
@@ -266,24 +267,44 @@
     box-shadow:0 8px 18px -10px rgba(193,27,27,0.55);
   }
 
-  .phone.hirek-mode header.app-header{
-    background:linear-gradient(150deg,#000 0%, var(--priority-light) 100%);
-  }
   .phone.hirek-mode .header-title,
   .phone.hirek-mode .brand-row .tag{
     color:var(--priority-text);
   }
   .phone.hirek-mode .brand-row{
-    opacity:0;
-    pointer-events:none;
+    opacity:1;
+    pointer-events:auto;
   }
   .phone.hirek-mode .home-back-btn{
-    display:flex;
+    display:none;
+  }
+  .phone.hirek-mode{
+    background: #000 !important;
+  }
+  .phone.hirek-mode .tabber{
+    background: #1a1a1a;
+    border-color: #333;
+  }
+  .phone.hirek-mode .tabber button{
+    color: #888;
+  }
+  .phone.hirek-mode .tabber button.active{
+    color: #fff;
+    background: linear-gradient(135deg,var(--accent-dark),var(--accent));
+  }
+  .phone.hirek-mode .tabber2 button{
+    background: #1a1a1a;
+    border-color: #333;
+    color: #888;
+  }
+  .phone.hirek-mode .tabber2 button.active{
+    color: #fff;
+    background: linear-gradient(135deg,var(--green-dark),var(--green-mid));
   }
   .phone.hirek-mode .tabber,
   .phone.hirek-mode .tabber2,
   .phone.hirek-mode nav.bottom-nav{
-    display:none;
+    display:flex;
   }
   .phone.hirek-mode .screen{
     background:transparent;
@@ -659,18 +680,21 @@
     position:absolute;
     left:14px;
     right:14px;
-    bottom:12px;
-    display:flex;
+    bottom:80px; /* Feljebb hozva 20px-ről */
+    display:none; /* Alapból rejtve */
     align-items:center;
     justify-content:space-between;
     gap:8px;
     padding:8px 10px;
-    background:rgba(255,255,255,0.98);
+    background:rgba(210,225,185,0.96); /* Kicsit sötétebb zöld árnyalat */
     backdrop-filter:blur(10px);
     border:1px solid var(--line);
     border-radius:999px;
     box-shadow:var(--shadow-strong);
-    z-index:5;
+    z-index:100;
+  }
+  .phone.social-mode .social-bottom-bar {
+    display: flex; /* Csak social módban látszik */
   }
   .social-bottom-bar button{
     appearance:none;
@@ -1024,6 +1048,405 @@
     z-index: 5;
     text-shadow: 0 2px 4px rgba(0,0,0,0.5);
   }
+  .video-actions-overlay {
+    display: flex;
+    gap: 10px;
+  }
+  .action-btn {
+    width: 36px;
+    height: 36px;
+    background: var(--green-soft);
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .action-btn:active {
+    transform: scale(0.9);
+    background: var(--green-light);
+  }
+  .action-btn img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+  }
+  .channel-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 5px;
+  }
+  .channel-footer .channel-video-date {
+    margin: 0;
+  }
+
+  /* ---------- Comments Overlay ---------- */
+  .comments-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 95;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .3s ease;
+  }
+  .comments-backdrop.open {
+    opacity: 1;
+    visibility: visible;
+  }
+  .comments-overlay {
+    position: absolute;
+    top: 25%; left: 0; right: 0; bottom: 0;
+    background: var(--paper);
+    transform: translateY(100%);
+    visibility: hidden;
+    transition: transform .32s cubic-bezier(.22,.9,.32,1), visibility 0s linear .32s;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
+  }
+  .comments-overlay.open {
+    transform: translateY(0);
+    visibility: visible;
+    transition: transform .32s cubic-bezier(.22,.9,.32,1);
+  }
+  .comments-header {
+    background: linear-gradient(150deg,var(--green-dark) 0%, var(--green) 100%);
+    padding: 20px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    color: white;
+  }
+  .comments-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .comment-item {
+    display: flex;
+    gap: 10px;
+    animation: fadeIn .2s ease;
+  }
+  .comment-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--green-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--green-dark);
+    border: 1px solid var(--line);
+  }
+  .comment-content {
+    background: var(--white);
+    padding: 10px 14px;
+    border-radius: 0 18px 18px 18px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--line);
+    max-width: 85%;
+  }
+  .comment-user {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+  .comment-text {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .comment-input-area {
+    background: var(--white);
+    padding: 12px 16px calc(60px + env(safe-area-inset-bottom)); /* Alul megemelve, hogy feljebb legyen az írás sáv */
+    border-top: 1px solid var(--line);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+  }
+  .comment-input-area input {
+    flex: 1;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 12px 18px;
+    border-radius: 999px;
+    font-size: 14px;
+    outline: none;
+    color: var(--ink);
+  }
+  .comment-input-area input:focus {
+    border-color: var(--green-mid);
+    background: var(--white);
+  }
+  .comment-send-btn {
+    background: linear-gradient(135deg,var(--green-dark),var(--green-mid));
+    color: var(--white);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(31,58,13,0.3);
+    transition: transform .15s ease;
+  }
+  /* ---------- Bűnvadászok Theme ---------- */
+  .bun-view {
+    background: #0f0f0f;
+    min-height: 100%;
+    color: white;
+    padding: 0 !important;
+  }
+  .bun-header {
+    background: linear-gradient(180deg, #2a0505 0%, #000 100%);
+    padding: 10px 16px;
+    border-bottom: 3px solid #8b0000;
+    text-align: center;
+    position: relative;
+    display: none; /* Rejtve, mert felül változik a logo */
+  }
+  .bun-logo-img {
+    height: 80px;
+    width: auto;
+    filter: drop-shadow(0 0 15px rgba(139, 0, 0, 0.9));
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .bun-logo-img:active {
+    transform: scale(0.9);
+  }
+
+  .bun-report-banner {
+    background: #ffd700;
+    color: #000;
+    padding: 12px;
+    font-weight: 800;
+    font-size: 14px;
+    text-align: center;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    border-bottom: 2px solid #8b0000;
+  }
+
+  .bun-card {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    margin: 14px;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  }
+  .bun-card-img {
+    width: 100%;
+    height: 180px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+  }
+  .bun-tag {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: #8b0000;
+    color: white;
+    padding: 4px 8px;
+    font-size: 10px;
+    font-weight: 900;
+    border-radius: 4px;
+    text-transform: uppercase;
+    box-shadow: 0 0 10px rgba(139,0,0,0.6);
+  }
+  .bun-card-content {
+    padding: 14px;
+  }
+  .bun-card-title {
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.3;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+  .bun-card-meta {
+    font-size: 11px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .bun-nav {
+    display: flex;
+    overflow-x: auto;
+    padding: 10px 14px;
+    gap: 10px;
+    background: #0a0a0a;
+    border-bottom: 1px solid #222;
+  }
+  .bun-nav-item {
+    white-space: nowrap;
+    color: #ccc;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border: 1px solid #333;
+    border-radius: 4px;
+  }
+  .bun-nav-item.active {
+    background: #8b0000;
+    color: white;
+    border-color: #8b0000;
+    box-shadow: 0 0 10px rgba(139,0,0,0.4);
+  }
+
+  /* ---------- Feedback Accordion ---------- */
+  .accordion {
+    margin-top: 24px;
+    background: var(--white);
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 20px;
+  }
+  .accordion-header {
+    padding: 18px 20px;
+    background: var(--green-soft);
+    color: var(--green-dark);
+    font-weight: 800;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .accordion-header:active {
+    background: var(--green-light);
+  }
+  .accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
+    background: var(--white);
+    padding: 0 20px;
+  }
+  .accordion.open .accordion-content {
+    max-height: 1000px; /* Megfelelő magasság a formnak */
+    padding: 24px 20px;
+  }
+  .accordion-icon {
+    font-size: 12px;
+    transition: transform 0.3s ease;
+  }
+  .accordion.open .accordion-icon {
+    transform: rotate(180deg);
+  }
+  .feedback-header-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .feedback-line {
+    width: 4px;
+    height: 18px;
+    background: #6E9C2E;
+    border-radius: 2px;
+  }
+  .feedback-header-text {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: var(--ink);
+    text-transform: uppercase;
+  }
+  .feedback-title {
+    font-size: 17px;
+    font-weight: 800;
+    margin: 0 0 16px 0;
+    color: var(--ink);
+  }
+  .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .form-label {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    padding-left: 2px;
+  }
+  .form-input, .form-select, .form-textarea {
+    background: #F9FAF6;
+    border: 1px solid #EAECE2;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--green-mid);
+  }
+  .form-textarea {
+    resize: none;
+    height: 100px;
+  }
+  .feedback-send-btn {
+    margin-top: 10px;
+    background: linear-gradient(to bottom, #4F7A1C, #1F3A0D);
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 14px;
+    font-size: 14px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    cursor: pointer;
+    box-shadow: 0 6px 15px rgba(31,58,13,0.25);
+  }
+  .feedback-send-btn:active {
+    transform: scale(0.98);
+  }
   .channel-badge{
     position:absolute; top:12px; left:12px;
     background:var(--accent);
@@ -1165,7 +1588,7 @@
   .shorts-gradient-bottom{bottom:0; background:linear-gradient(0deg, rgba(0,0,0,0.7), transparent);}
   .shorts-close{
     position:absolute;
-    top:14px; left:14px;
+    top:60px; left:14px;
     z-index:5;
     width:32px;height:32px;
     border-radius:50%;
@@ -1178,7 +1601,7 @@
   .shorts-close svg{width:15px;height:15px;}
   .shorts-mute{
     position:absolute;
-    top:14px; right:14px;
+    top:60px; right:14px;
     z-index:5;
     width:32px;height:32px;
     border-radius:50%;
@@ -1221,12 +1644,16 @@
     cursor:pointer;
   }
   .shorts-actions .a-icon{
-    width:38px;height:38px;
+    width:44px;height:44px;
     border-radius:50%;
     background:rgba(255,255,255,0.14);
     display:flex;align-items:center;justify-content:center;
   }
-  .shorts-actions .a-icon svg{width:17px;height:17px;}
+  .shorts-actions .a-icon svg,
+  .shorts-actions .a-icon img{
+    width:22px;height:22px;
+    object-fit: contain;
+  }
   .shorts-actions button.liked .a-icon{background:var(--accent);}
   .shorts-nav-zone{
     position:absolute;
@@ -1266,6 +1693,112 @@
     z-index:5;
     pointer-events:none;
   }
+
+  .phone.shorts-active .social-bottom-bar,
+  .phone.shorts-active nav.bottom-nav,
+  .phone.shorts-active .tabber,
+  .phone.shorts-active .tabber2 {
+    display: none !important;
+  }
+
+  /* ---------- Pajtárs Tábor Theme ---------- */
+  .pajtars-view {
+    background: #fdfdfa;
+    padding: 0 !important;
+  }
+  .pajtars-hero {
+    background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://pajtars.hu/wp-content/uploads/2023/10/pajtars_hero.jpg') center/cover;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    border-bottom: 4px solid #4a6741;
+  }
+  .pajtars-hero h2 {
+    font-size: 20px;
+    font-weight: 900;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  }
+  .pajtars-hero p {
+    font-size: 13px;
+    font-style: italic;
+    margin-top: 8px;
+    opacity: 0.9;
+  }
+  .pajtars-section {
+    padding: 20px 16px;
+  }
+  .pajtars-mission {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .mission-item {
+    background: white;
+    border: 1px solid #e0e0d0;
+    border-radius: 12px;
+    padding: 12px 8px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  }
+  .mission-item .icon {
+    font-size: 24px;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .mission-item span {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #4a6741;
+  }
+  .pajtars-card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #e7e9de;
+    overflow: hidden;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-soft);
+  }
+  .pajtars-card-img {
+    height: 140px;
+    background-size: cover;
+    background-position: center;
+  }
+  .pajtars-card-content {
+    padding: 16px;
+  }
+  .pajtars-card-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: #2c3e2d;
+    margin-bottom: 6px;
+  }
+  .pajtars-card-desc {
+    font-size: 12.5px;
+    color: #5b6650;
+    line-height: 1.5;
+  }
+  .pajtars-btn {
+    background: #4a6741;
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 800;
+    width: 100%;
+    margin-top: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(74, 103, 65, 0.3);
+  }
+  .pajtars-btn:active { transform: scale(0.98); }
 
   .hint{
     text-align:center;
@@ -1366,7 +1899,39 @@ body {
 
   <div class="screen">
     <div class="view active" id="view-fooldal">
-      <div class="section-label">Képviselőjelöltjeink</div>
+      <div class="section-label">Legfrissebb videóink</div>
+      <div class="channel-card">
+        <div class="channel-head">
+          <div class="channel-avatar" id="chan-icon-1"></div>
+          <div>
+            <p class="channel-name">Toroczkai László</p>
+            <p class="channel-sub">YouTube-csatorna</p>
+          </div>
+          <div class="channel-cta" onclick="window.open('https://www.youtube.com/@ToroczkaiLaszloHivatalos', '_blank')" style="cursor:pointer;">Csatorna</div>
+        </div>
+        <div class="channel-thumb" id="video-container-1" data-video-id="WMvSeHCav-k" onclick="playVideo('video-container-1', 'WMvSeHCav-k')">
+          <div class="channel-badge">ÚJ</div>
+          <div class="custom-play-btn" id="play-icon-1"></div>
+          <div class="thumb-overlay"></div>
+          <div class="video-title-overlay">Toroczkai László legfrissebb videója</div>
+        </div>
+        <p class="channel-video-title">Toroczkai László legfrissebb videója</p>
+        <div class="channel-footer">
+          <p class="channel-video-date">2026. júl. 29.</p>
+          <div class="video-actions-overlay">
+            <div class="action-btn" onclick="event.stopPropagation(); openComments('WMvSeHCav-k', 'Toroczkai László legfrissebb videója')">
+              <img src="assets/comment.png" alt="Comment">
+            </div>
+            <div class="action-btn" onclick="shareVideo(event, 'Toroczkai László legfrissebb videója', 'WMvSeHCav-k')">
+              <img src="assets/share.png" alt="Share">
+            </div>
+          </div>
+        </div>
+        <div class="channel-more-label">További videók</div>
+        <div class="channel-more-row" id="chan-more-1"></div>
+      </div>
+
+      <div class="section-label" style="margin-top:20px;">Képviselőjelöltjeink</div>
       <div class="candidate-carousel" id="candidate-carousel"></div>
       <div class="carousel-dots" id="carousel-dots"></div>
 
@@ -1381,52 +1946,140 @@ body {
         </div>
       </div>
 
-      <div class="section-label" style="margin-top:20px;">Legfrissebb videóink</div>
-      <div class="channel-card">
-        <div class="channel-head">
-          <div class="channel-avatar" id="chan-icon-1"></div>
-          <div>
-            <p class="channel-name">Toroczkai László</p>
-            <p class="channel-sub">YouTube-csatorna</p>
-          </div>
-          <div class="channel-cta" onclick="window.open('https://www.youtube.com/@ToroczkaiLaszloHivatalos', '_blank')" style="cursor:pointer;">Csatorna</div>
-        </div>
-        <div class="channel-thumb" id="video-container-1" data-video-id="dQw4w9WgXcQ" onclick="playVideo('video-container-1', 'dQw4w9WgXcQ')">
-          <div class="channel-badge">ÚJ</div>
-          <div class="custom-play-btn" id="play-icon-1"></div>
-          <div class="thumb-overlay"></div>
-          <div class="video-title-overlay">Élő közvetítés a legfrissebb parlamenti ülésről</div>
-        </div>
-        <p class="channel-video-title">Élő közvetítés a legfrissebb parlamenti ülésről</p>
-        <p class="channel-video-date">2026. júl. 29.</p>
-        <div class="channel-more-label">További videók</div>
-        <div class="channel-more-row" id="chan-more-1"></div>
-      </div>
-
       <div class="section-label" style="margin-top:20px;">Válassz egy modult</div>
       <div class="module-grid" id="module-grid"></div>
+
+      <div class="accordion" id="feedback-accordion">
+        <div class="accordion-header" onclick="toggleAccordion('feedback-accordion')">
+          <span>✍️ Észrevételek / Kapcsolat</span>
+          <span class="accordion-icon">▼</span>
+        </div>
+        <div class="accordion-content">
+          <div class="feedback-header-row">
+            <div class="feedback-line"></div>
+            <div class="feedback-header-text">ÍRJ A MI HAZÁNKNAK</div>
+          </div>
+          <h2 class="feedback-title">Van észrevételed, javaslatod?</h2>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">NÉV</label>
+              <input type="text" class="form-input" placeholder="Teljes név">
+            </div>
+            <div class="form-group">
+              <label class="form-label">EMAIL</label>
+              <input type="email" class="form-input" placeholder="email@pelda.hu">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">TÁRGY</label>
+            <select class="form-select">
+              <option value="" disabled selected>Válassz témát</option>
+              <option>Közbiztonság</option>
+              <option>Gazdaság</option>
+              <option>Oktatás</option>
+              <option>Helyi ügyek</option>
+              <option>Egyéb</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label">ÜZENET</label>
+            <textarea class="form-textarea" placeholder="Írd le gondolataid..."></textarea>
+          </div>
+
+          <button class="feedback-send-btn" onclick="submitFeedback()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            Üzenet küldése
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div class="view" id="view-hirek">
-      <div class="section-label">Bűnvadászok</div>
+    <div class="view bun-view" id="view-hirek">
+      <div class="bun-header">
+        <img src="assets/bunvadaszok.png" alt="Bűnvadászok" class="bun-logo-img">
+      </div>
+      <div class="bun-nav">
+        <div class="bun-nav-item active">Összes</div>
+        <div class="bun-nav-item">Leleplezés</div>
+        <div class="bun-nav-item">No-Go Zóna</div>
+        <div class="bun-nav-item">Drog</div>
+        <div class="bun-nav-item">Videó</div>
+      </div>
+
+      <div id="bun-video-list">
+        <!-- Itt jelennek meg a YouTube videók -->
+        <div class="about-card" style="background: transparent; border: none; color: #888;">
+          <p>Videók betöltése...</p>
+        </div>
+      </div>
+
+      <div style="height: 100px;"></div>
     </div>
 
-    <div class="view" id="view-jeloltek">
-      <div class="section-label">Pajtárstábor</div>
+    <div class="view pajtars-view" id="view-jeloltek">
+      <div class="pajtars-hero">
+        <h2>Pajtárs Mozgalom</h2>
+        <p>"Megmaradásunk záloga: a Kárpát-medence fiatalsága"</p>
+      </div>
+
+      <div class="pajtars-section">
+        <div class="pajtars-mission">
+          <div class="mission-item">
+            <span class="icon">🇭🇺</span>
+            <span>Hazaszeretet</span>
+          </div>
+          <div class="mission-item">
+            <span class="icon">🤝</span>
+            <span>Közösség</span>
+          </div>
+          <div class="mission-item">
+            <span class="icon">🏹</span>
+            <span>Hagyomány</span>
+          </div>
+        </div>
+
+        <div class="section-label">Aktuális táboraink</div>
+
+        <div class="pajtars-card">
+          <div class="pajtars-card-img" style="background-image: url('https://pajtars.hu/wp-content/uploads/2024/02/sarud_tabor.jpg')"></div>
+          <div class="pajtars-card-content">
+            <div class="pajtars-card-title">Nyári Nomád Tábor — Sarud</div>
+            <div class="pajtars-card-desc">Életre szóló kaland a Tisza-tónál! Íjászat, lovaglás, vízi sportok és igazi bajtársi közösség vár rád.</div>
+            <button class="pajtars-btn" onclick="window.open('https://pajtars.hu/jelentkezes/', '_blank')">Jelentkezés</button>
+          </div>
+        </div>
+
+        <div class="pajtars-card">
+          <div class="pajtars-card-img" style="background-image: url('https://pajtars.hu/wp-content/uploads/2024/02/velence_tabor.jpg')"></div>
+          <div class="pajtars-card-content">
+            <div class="pajtars-card-title">Honvédelmi Tábor — Velence</div>
+            <div class="pajtars-card-desc">Fegyelem, kitartás és sport. Ismerd meg határaidat a Velencei-tó partján szervezett kiképzésünkön.</div>
+            <button class="pajtars-btn" onclick="window.open('https://pajtars.hu/jelentkezes/', '_blank')">Részletek</button>
+          </div>
+        </div>
+
+        <div class="section-label">Események & Túrák</div>
+        <div class="news-card" onclick="window.open('https://pajtars.hu/esemenyek/', '_blank')">
+          <div class="news-thumb" style="background: #4a6741; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">⛰️</div>
+          <div>
+            <div class="news-meta"><span>Túra</span><span class="dot"></span><span class="date">2026. Szeptember</span></div>
+            <div class="news-title">Őszi Emléktúra a Pilisben</div>
+            <div class="news-summary">Csatlakozz hozzánk egy közös túrára, ahol a természetjárás mellett történelmi emlékeinkről is megemlékezünk.</div>
+          </div>
+        </div>
+
+        <div style="height: 40px;"></div>
+      </div>
     </div>
 
     <div class="view" id="view-social">
-      <div class="social-subview active" id="social-subview-home">
-        <div class="section-label">Social Media</div>
-        <div class="about-card">
-          <p>Ez a Social Media nézet jelenleg a demo prototype része. Az OpenSource SocialNet beágyazása helyett itt maradt a mobilapplikáció stílusú felület.</p>
-        </div>
-      </div>
-
-      <div class="social-subview" id="social-subview-posts">
+      <div class="social-subview active" id="social-subview-posts">
         <div class="section-label">Bejegyzések</div>
         <div class="about-card">
-          <p>Ez a szekció jelenleg üres. A legfrissebb videókat a Főoldalon találod.</p>
+          <p>Videók betöltése...</p>
         </div>
       </div>
 
@@ -1446,23 +2099,9 @@ body {
 
       <div class="social-subview" id="social-subview-shorts">
         <div class="section-label">Shorts</div>
-        <div class="social-card-list">
-          <div class="mini-card">
-            <h3>Rövid videó 1</h3>
-            <p>Itt jelennek meg a rövid videók a későbbi appban.</p>
-          </div>
-          <div class="mini-card">
-            <h3>Rövid videó 2</h3>
-            <p>Ez egy placeholder tartalom.</p>
-          </div>
+        <div class="about-card">
+          <p>A Shorts videók betöltése folyamatban...</p>
         </div>
-      </div>
-
-      <div class="social-bottom-bar">
-        <button type="button" data-social-view="posts">Bejegyzések</button>
-        <button type="button" data-social-view="profiles">Profilok</button>
-        <button type="button" data-social-view="shorts">Shorts</button>
-        <button type="button" class="home-icon" data-social-view="home" aria-label="Főoldal"><img src="assets/haziko.png" alt="Hazikó"></button>
       </div>
     </div>
 
@@ -1497,7 +2136,12 @@ body {
     </div>
   </div>
 
-
+  <div class="social-bottom-bar">
+    <button type="button" data-social-view="posts">Bejegyzések</button>
+    <button type="button" data-social-view="profiles">Profilok</button>
+    <button type="button" onclick="openShorts()">Shorts</button>
+    <button type="button" class="home-icon" aria-label="Főoldal"><img src="assets/haziko.png" alt="Hazikó"></button>
+  </div>
 
   <div class="detail" id="detail">
     <div class="detail-header">
@@ -1511,16 +2155,117 @@ body {
     </div>
   </div>
 
-
-
   <div class="shorts-overlay" id="shorts-overlay">
     <div class="shorts-stage" id="shorts-stage">
       <!-- a shorts-slide elemek JS-ből töltődnek be -->
+    </div>
+    <!-- Common controls for the entire overlay -->
+    <div class="shorts-gradient-top"></div>
+    <div class="shorts-gradient-bottom"></div>
+    <button type="button" class="shorts-close" onclick="closeShorts()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <button type="button" class="shorts-mute" id="global-shorts-mute" onclick="toggleShortsMute()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16 9l4 6M20 9l-4 6" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></button>
+    <div class="shorts-hint">Simíts fel/le a váltáshoz</div>
+  </div>
+
+  <div class="comments-backdrop" id="comments-backdrop" onclick="closeComments()"></div>
+  <div class="comments-overlay" id="comments-overlay">
+    <div class="comments-header">
+      <button class="back-btn" style="color:white; background:rgba(255,255,255,0.2); margin-bottom:0;" onclick="closeComments()">←</button>
+      <div style="font-weight: 800; font-size: 18px; color: white;">Hozzászólások</div>
+    </div>
+    <div class="comments-list" id="comments-list">
+      <!-- Kommentek JS-ből -->
+    </div>
+    <div class="comment-input-area">
+      <input type="text" placeholder="Írj egy hozzászólást..." id="comment-input">
+      <button class="comment-send-btn" onclick="addComment()">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+      </button>
     </div>
   </div>
 </div>
 
 <script>
+/* ---------- Comments Logic ---------- */
+let currentVideoIdForComments = null;
+const MOCK_COMMENTS = [
+  { user: "Kovács Péter", text: "Nagyon jó videó, köszönjük a tájékoztatást!", initial: "KP" },
+  { user: "Szabó Anna", text: "Egyetértek az elhangzottakkal, csak így tovább!", initial: "SA" },
+  { user: "Nagy Zoltán", text: "Mikor várható a következő rész? Nagyon várom!", initial: "NZ" },
+  { user: "Hajdú Éva", text: "Végre valaki kimondja az igazságot.", initial: "HÉ" }
+];
+
+function openComments(videoId, videoTitle) {
+  currentVideoIdForComments = videoId;
+  const overlay = document.getElementById('comments-overlay');
+  const backdrop = document.getElementById('comments-backdrop');
+  const list = document.getElementById('comments-list');
+  const input = document.getElementById('comment-input');
+
+  list.innerHTML = '';
+  input.value = '';
+
+  MOCK_COMMENTS.forEach(c => {
+    const el = document.createElement('div');
+    el.className = 'comment-item';
+    el.innerHTML = `
+      <div class="comment-avatar">${c.initial}</div>
+      <div class="comment-content">
+        <div class="comment-user">${c.user}</div>
+        <div class="comment-text">${c.text}</div>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+
+  overlay.classList.add('open');
+  if (backdrop) backdrop.classList.add('open');
+}
+
+function closeComments() {
+  document.getElementById('comments-overlay').classList.remove('open');
+  const backdrop = document.getElementById('comments-backdrop');
+  if (backdrop) backdrop.classList.remove('open');
+}
+
+function addComment() {
+  const input = document.getElementById('comment-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const list = document.getElementById('comments-list');
+  const el = document.createElement('div');
+  el.className = 'comment-item';
+  el.innerHTML = `
+    <div class="comment-avatar" style="background:var(--green-mid); color:white; border-color:var(--green-dark);">ÉN</div>
+    <div class="comment-content" style="border-color:var(--green-mid); background:var(--green-soft);">
+      <div class="comment-user">Én (Most)</div>
+      <div class="comment-text">${text}</div>
+    </div>
+  `;
+  list.appendChild(el);
+  list.scrollTop = list.scrollHeight;
+  input.value = '';
+}
+
+function toggleAccordion(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('open');
+}
+
+function submitFeedback() {
+  alert('Köszönjük! Az üzenetedet sikeresen elküldtük a Mi Hazánknak.');
+  const accordion = document.getElementById('feedback-accordion');
+  if (accordion) accordion.classList.remove('open');
+
+  // Clear form
+  const content = document.querySelector('.accordion-content');
+  if (content) {
+    content.querySelectorAll('input, textarea').forEach(i => i.value = '');
+    const select = content.querySelector('select');
+    if (select) select.selectedIndex = 0;
+  }
+}
 const NEWS = [
   {"title":"Valóban romlik Budapest közbiztonsága?","summary":"Rövid összefoglaló egy önkormányzati témájú közleményről, amely a fővárosi közbiztonság megítélését érinti.","category":"Mi Hazánk","source":"Mi Hazánk","date":"2026-07-05","icon":"mihazank.svg"},
   {"title":"Soha többé ne fordulhassanak elő ilyen tragédiák!","summary":"Közlemény egy munkavédelmi témájú esetről és az ezzel kapcsolatos felvetésekről.","category":"Mi Hazánk","source":"Mi Hazánk","date":"2026-07-05","icon":"mihazank.svg"},
@@ -1631,48 +2376,334 @@ if (carouselDots) {
   if (el) el.innerHTML = ICONS.play;
 });
 
-const CHANNEL_MORE_1 = [
-  {title: "Kérdés-felelet a mai ülésről", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
-  {title: "Interjú a napi eseményekről", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
-  {title: "Sajtótájékoztató összefoglaló", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
-  {title: "Frakcióülés – heti kitekintő", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"}
-];
-const CHANNEL_MORE_2 = [
-  {title: "Előzetes: heti összefoglaló", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
-  {title: "Helyszíni riport", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
-  {title: "Lakossági fórum", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
-  {title: "Heti összefoglaló", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"}
-];
+/* ---------- YouTube API Beállítások ---------- */
+const YT_API_KEY = 'AIzaSyBf0tpeS8FHC74j3GMhZt7EwI9FGsqH1Ko'; // Beillesztve
+const YT_CHANNEL_ID = 'UC-ZBFbpGZvEVSAGaNsvxgKQ'; // Toroczkai László Channel ID
+const BUN_CHANNEL_ID = 'UCdPhEv5wiw2uK6J0_wkc-RA'; // Bűnvadászok Channel ID
 
-function renderChannelMore(containerId, items) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  items.forEach((item, index) => {
-    const videoId = item.url.split('v=')[1] || item.url.split('/').pop();
-    const div = document.createElement('div');
-    div.className = 'channel-more-item';
-    div.style.cursor = 'pointer';
-    // Load mini thumbnail automatically
-    div.innerHTML = `
-      <div class="channel-more-thumb" style="background-image: url('https://img.youtube.com/vi/${videoId}/default.jpg'); background-size: cover; background-position: center;">
-        <div style="position:absolute; inset:0; background:rgba(0,0,0,0.3);"></div>
-        <div style="z-index:2; position:relative;">${ICONS.play}</div>
+function shareVideo(event, title, videoId) {
+  if (event) event.stopPropagation();
+  const url = `https://www.youtube.com/watch?v=${videoId}`;
+  if (navigator.share) {
+    navigator.share({
+      title: title,
+      text: 'Nézd meg ezt a videót a Követek appban!',
+      url: url
+    }).catch(err => console.log('Error sharing:', err));
+  } else {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+  }
+}
+
+async function fetchBunVideos() {
+  if (!YT_API_KEY || YT_API_KEY === 'YOUR_API_KEY_HERE') return;
+
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/search?key=${YT_API_KEY}&channelId=${BUN_CHANNEL_ID}&part=snippet,id&order=date&maxResults=10&type=video`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data && data.items) {
+      renderBunVideos(data.items);
+    }
+  } catch (error) {
+    console.error('Hiba a Bűnvadászok videók lekérésekor:', error);
+  }
+}
+
+function renderBunVideos(videos) {
+  const container = document.getElementById('bun-video-list');
+  if (!container) return;
+  container.innerHTML = '';
+
+  videos.forEach((item, idx) => {
+    const videoId = item.id.videoId;
+    const title = item.snippet.title;
+    const thumb = item.snippet.thumbnails.high.url;
+    const date = new Date(item.snippet.publishedAt).toLocaleDateString('hu-HU');
+
+    // Véletlenszerű tag generálása a design kedvéért
+    const tags = ["LELEPLEZÉS", "NO-GO ZÓNA", "AKCIÓ", "FORRÓ", "FRISS"];
+    const tag = tags[idx % tags.length];
+
+    const card = document.createElement('div');
+    card.className = 'bun-card';
+    card.innerHTML = `
+      <div class="bun-card-img" style="background-image: url('${thumb}')" onclick="playVideoInBunCard(this, '${videoId}')">
+        <div class="bun-tag">${tag}</div>
+        <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;">
+          <div style="width:50px; height:50px; background:#8b0000; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; box-shadow:0 0 20px rgba(139,0,0,0.6);">
+            ${ICONS.play}
+          </div>
+        </div>
       </div>
-      <span>${item.title}</span>`;
-
-    const parentContainer = containerId.replace('chan-more-', 'video-container-');
-
-    div.addEventListener('click', () => {
-      // Update metadata on play
-      const container = document.getElementById(parentContainer);
-      const titleEl = container.parentElement.querySelector('.channel-video-title');
-      if (titleEl) titleEl.textContent = item.title;
-
-      playVideo(parentContainer, videoId);
-      // Removed scrollIntoView to prevent the header from shifting
-    });
-    el.appendChild(div);
+      <div class="bun-card-content">
+        <div class="bun-card-title">${title}</div>
+        <div class="bun-card-meta">
+          <span style="color:#8b0000;">● Aktuális</span>
+          <span>📅 ${date}</span>
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
   });
+}
+
+function playVideoInBunCard(el, videoId) {
+  el.onclick = null;
+  el.innerHTML = `
+    <iframe
+      src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen
+      style="width:100%; height:180px; border:none;">
+    </iframe>
+  `;
+}
+
+async function fetchLatestVideos() {
+  if (!YT_API_KEY || YT_API_KEY === 'YOUR_API_KEY_HERE') return;
+
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/search?key=${YT_API_KEY}&channelId=${YT_CHANNEL_ID}&part=snippet,id&order=date&maxResults=6&type=video`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data && data.items) {
+      updateVideoUI(data.items);
+    }
+  } catch (error) {
+    console.error('Hálózat hiba a YouTube adatok lekérésekor:', error);
+  }
+}
+
+function updateVideoUI(videos) {
+  if (!Array.isArray(videos) || videos.length === 0) return;
+
+  // Safety check for video objects
+  const validVideos = videos.filter(v => v.id && v.id.videoId);
+  if (validVideos.length === 0) return;
+
+  // Tartalék pool a Bejegyzések feedhez, ha a playlistItems lekérés meghiúsulna
+  SEARCH_VIDEO_POOL = validVideos.map(v => ({
+    videoId: v.id.videoId,
+    title: v.snippet.title,
+    thumb: (v.snippet.thumbnails.high || v.snippet.thumbnails.default || {}).url || '',
+    publishedAt: v.snippet.publishedAt
+  }));
+  if (!POST_VIDEO_POOL.length) {
+    POST_VIDEO_POOL = SEARCH_VIDEO_POOL;
+    initPostsFeed();
+  }
+
+  // 1. Főoldali nagy videó
+  const mainVideo = validVideos[0];
+  const mainContainer = document.getElementById('video-container-1');
+  if (mainContainer) {
+    mainContainer.dataset.videoId = mainVideo.id.videoId;
+    const thumbUrl = mainVideo.snippet.thumbnails.high ? mainVideo.snippet.thumbnails.high.url : mainVideo.snippet.thumbnails.default.url;
+    mainContainer.style.backgroundImage = `url('${thumbUrl}')`;
+
+    const titleOverlay = mainContainer.querySelector('.video-title-overlay');
+    if (titleOverlay) titleOverlay.textContent = mainVideo.snippet.title;
+
+    const parent = mainContainer.parentElement;
+    if (parent) {
+      const mainTitle = parent.querySelector('.channel-video-title');
+      if (mainTitle) mainTitle.textContent = mainVideo.snippet.title;
+
+      const mainDate = parent.querySelector('.channel-video-date');
+      if (mainDate) mainDate.textContent = new Date(mainVideo.snippet.publishedAt).toLocaleDateString('hu-HU');
+
+      const footer = parent.querySelector('.channel-footer');
+      if (footer) {
+        footer.innerHTML = `
+          <p class="channel-video-date">${new Date(mainVideo.snippet.publishedAt).toLocaleDateString('hu-HU')}</p>
+          <div class="video-actions-overlay">
+            <div class="action-btn" onclick="event.stopPropagation(); openComments('${mainVideo.id.videoId}', '${mainVideo.snippet.title.replace(/'/g, "\\'")}')">
+              <img src="assets/comment.png" alt="Comment">
+            </div>
+            <div class="action-btn" onclick="shareVideo(event, '${mainVideo.snippet.title.replace(/'/g, "\\'")}', '${mainVideo.id.videoId}')">
+              <img src="assets/share.png" alt="Share">
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    mainContainer.onclick = () => playVideo('video-container-1', mainVideo.id.videoId);
+  }
+
+  // 2. Főoldali "További videók"
+  const moreContainer = document.getElementById('chan-more-1');
+  if (moreContainer) {
+    moreContainer.innerHTML = '';
+    validVideos.slice(1, 5).forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'channel-more-item';
+      div.style.cursor = 'pointer';
+      const thumb = item.snippet.thumbnails.default.url;
+      div.innerHTML = `
+        <div class="channel-more-thumb" style="background-image: url('${thumb}'); background-size: cover; background-position: center;">
+          <div style="position:absolute; inset:0; background:rgba(0,0,0,0.3);"></div>
+          <div style="z-index:2; position:relative;">${ICONS.play}</div>
+        </div>
+        <span>${item.snippet.title}</span>`;
+
+      div.addEventListener('click', () => {
+        playVideo('video-container-1', item.id.videoId);
+        const target = document.getElementById('video-container-1');
+        if (target) {
+           const container = document.querySelector('.screen');
+           container.scrollTo({ top: target.offsetTop - 100, behavior: 'smooth' });
+        }
+      });
+      moreContainer.appendChild(div);
+    });
+  }
+
+}
+
+/* ---------- Végtelen, véletlenszerű bejegyzés-feed (Social Media -> Bejegyzések) ---------- */
+let POST_VIDEO_POOL = [];
+let SEARCH_VIDEO_POOL = [];
+
+async function getUploadsPlaylistId() {
+  // A csatorna tényleges feltöltési-lejátszólista ID-ját kérjük le az API-tól,
+  // ahelyett hogy a 'UC' -> 'UU' cserével kitalálnánk (ez nem minden csatornánál helyes).
+  const url = `https://www.googleapis.com/youtube/v3/channels?key=${YT_API_KEY}&id=${YT_CHANNEL_ID}&part=contentDetails`;
+  const response = await fetch(url);
+  const data = await response.json();
+  if (data && data.error) {
+    throw new Error(data.error.message);
+  }
+  const uploads = data?.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+  if (!uploads) {
+    throw new Error('Nem található feltöltési lejátszási lista ehhez a csatorna ID-hoz.');
+  }
+  return uploads;
+}
+
+async function fetchChannelVideoPool() {
+  if (!YT_API_KEY || YT_API_KEY === 'YOUR_API_KEY_HERE') return;
+
+  try {
+    const uploadsPlaylistId = await getUploadsPlaylistId();
+    const url = `https://www.googleapis.com/youtube/v3/playlistItems?key=${YT_API_KEY}&playlistId=${uploadsPlaylistId}&part=snippet&maxResults=50`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data && Array.isArray(data.items) && data.items.length) {
+      POST_VIDEO_POOL = data.items
+        .filter(it => it.snippet && it.snippet.resourceId && it.snippet.resourceId.videoId)
+        .map(it => ({
+          videoId: it.snippet.resourceId.videoId,
+          title: it.snippet.title,
+          thumb: (it.snippet.thumbnails && (it.snippet.thumbnails.high || it.snippet.thumbnails.default) || {}).url || '',
+          publishedAt: it.snippet.publishedAt
+        }));
+      initPostsFeed();
+    } else if (data && data.error) {
+      console.error('YouTube playlist hiba:', data.error.megizssage);
+      // Ha a keresés-alapú lekérés már hozott adatot, azt használjuk tartalékként
+      if (SEARCH_VIDEO_POOL.length) {
+        POST_VIDEO_POOL = SEARCH_VIDEO_POOL;
+        initPostsFeed();
+      } else {
+        showPostsError(data.error.message);
+      }
+    }
+  } catch (error) {
+    console.error('Hálózat hiba a bejegyzések lekérésekor:', error);
+    if (SEARCH_VIDEO_POOL.length) {
+      POST_VIDEO_POOL = SEARCH_VIDEO_POOL;
+      initPostsFeed();
+    } else {
+      showPostsError(error.message);
+    }
+  }
+}
+
+function pickRandomVideo() {
+  if (!POST_VIDEO_POOL.length) return null;
+  return POST_VIDEO_POOL[Math.floor(Math.random() * POST_VIDEO_POOL.length)];
+}
+
+function buildPostCard(video) {
+  const card = document.createElement('div');
+  card.className = 'channel-card';
+  const thumb = video.thumb || `https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`;
+  card.innerHTML = `
+    <div class="channel-head">
+      <div class="channel-avatar">${ICONS.youtube}</div>
+      <div>
+        <p class="channel-name">Toroczkai László</p>
+        <p class="channel-sub">YouTube videó</p>
+      </div>
+    </div>
+    <div class="channel-thumb" style="background-image: url('${thumb}')" onclick="playVideoInCard(this, '${video.videoId}')">
+      <div class="custom-play-btn">${ICONS.play}</div>
+      <div class="thumb-overlay"></div>
+      <div class="video-title-overlay">${video.title}</div>
+    </div>
+    <p class="channel-video-title" style="padding: 10px 14px 0 14px; font-weight: 700; margin:0;">${video.title}</p>
+    <div class="channel-footer" style="padding: 0 14px 10px 14px;">
+      <p class="channel-video-date" style="margin:0; font-size:11px; opacity:0.7;">${video.publishedAt ? new Date(video.publishedAt).toLocaleDateString('hu-HU') : ''}</p>
+      <div class="video-actions-overlay">
+        <div class="action-btn" onclick="event.stopPropagation(); openComments('${video.videoId}', '${video.title.replace(/'/g, "\\'")}')">
+          <img src="assets/comment.png" alt="Comment">
+        </div>
+        <div class="action-btn" onclick="shareVideo(event, '${video.title.replace(/'/g, "\\'")}', '${video.videoId}')">
+          <img src="assets/share.png" alt="Share">
+        </div>
+      </div>
+    </div>
+  `;
+  return card;
+}
+
+function appendRandomPosts(count) {
+  const postsView = document.querySelector('#social-subview-posts');
+  if (!postsView || !POST_VIDEO_POOL.length) return;
+  for (let i = 0; i < count; i++) {
+    const video = pickRandomVideo();
+    if (video) postsView.appendChild(buildPostCard(video));
+  }
+}
+
+function initPostsFeed() {
+  const postsView = document.querySelector('#social-subview-posts');
+  if (!postsView || !POST_VIDEO_POOL.length) return;
+  postsView.innerHTML = '<div class="section-label">Legfrissebb tartalom</div>';
+  appendRandomPosts(8);
+}
+
+/* Végtelen görgetés: ha a Bejegyzések fül aljához közelítünk, jöjjön több véletlen videó */
+document.addEventListener('DOMContentLoaded', () => {
+  const screenEl = document.querySelector('.screen');
+  if (!screenEl) return;
+  screenEl.addEventListener('scroll', () => {
+    const socialPostsActive =
+      document.getElementById('view-social')?.classList.contains('active') &&
+      document.getElementById('social-subview-posts')?.classList.contains('active');
+    if (!socialPostsActive) return;
+    const nearBottom = screenEl.scrollTop + screenEl.clientHeight >= screenEl.scrollHeight - 400;
+    if (nearBottom) {
+      appendRandomPosts(4);
+    }
+  });
+});
+
+function playVideoInCard(el, videoId) {
+  el.onclick = null;
+  el.innerHTML = `
+    <iframe
+      src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen
+      style="width:100%; height:100%; border:none;">
+    </iframe>
+  `;
 }
 
 function playVideo(containerId, videoId) {
@@ -1697,7 +2728,7 @@ function playVideo(containerId, videoId) {
   container.onclick = null;
   container.innerHTML = `
     <iframe
-      src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&widget_referrer=${encodeURIComponent(location.href)}"
+      src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
       allowfullscreen>
     </iframe>
@@ -1708,7 +2739,19 @@ function initThumbnails() {
   document.querySelectorAll('.channel-thumb[data-video-id]').forEach(el => {
     const videoId = el.dataset.videoId;
     if (videoId) {
-      el.style.backgroundImage = `url('https://img.youtube.com/vi/${videoId}/maxresdefault.jpg')`;
+      // Create an image to test if maxresdefault exists, otherwise fallback
+      const img = new Image();
+      img.onload = function() {
+        if (this.width > 120) {
+          el.style.backgroundImage = `url('https://img.youtube.com/vi/${videoId}/maxresdefault.jpg')`;
+        } else {
+          el.style.backgroundImage = `url('https://img.youtube.com/vi/${videoId}/hqdefault.jpg')`;
+        }
+      };
+      img.onerror = function() {
+        el.style.backgroundImage = `url('https://img.youtube.com/vi/${videoId}/hqdefault.jpg')`;
+      };
+      img.src = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
     }
   });
   // Play icons
@@ -1717,9 +2760,6 @@ function initThumbnails() {
     if (el) el.innerHTML = ICONS.play;
   });
 }
-renderChannelMore('chan-more-1', CHANNEL_MORE_1);
-renderChannelMore('chan-more-2', CHANNEL_MORE_2);
-
 /* ---------- Shorts beépített lejátszó ---------- */
 const ICONS_SHORTS = {
   play: ICONS.play,
@@ -1732,116 +2772,210 @@ const ICONS_SHORTS = {
   chevronDown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>'
 };
 
-const SHORTS = [
-  {src:'assets/shorts/short1.mp4', poster:'assets/shorts/poster1.jpg', channel:'Mi Hazánk', caption:'Rövid összefoglaló a legfrissebb toborzási kezdeményezésről.'},
-  {src:'assets/shorts/short2.mp4', poster:'assets/shorts/poster2.jpg', channel:'Bűnvadászok', caption:'Pillanatkép egy helyszíni bejárásról.'},
-  {src:'assets/shorts/short3.mp4', poster:'assets/shorts/poster3.jpg', channel:'Toroczkai László', caption:'Rövid interjúrészlet a heti eseményekről.'},
-  {src:'assets/shorts/short4.mp4', poster:'assets/shorts/poster4.jpg', channel:'Mi Hazánk', caption:'A hét kiemelt pillanata egy mondatban.'}
-];
-
-const shortsFabIcon = document.getElementById('shorts-fab-icon');
-if (shortsFabIcon) shortsFabIcon.innerHTML = ICONS_SHORTS.play;
-
+let DYNAMIC_SHORTS = [];
+let shortsPlayers = {}; // videoId -> YT.Player instance
 const shortsStage = document.getElementById('shorts-stage');
 const shortsOverlay = document.getElementById('shorts-overlay');
 let shortsIndex = 0;
 let shortsMuted = true;
+let isFetchingShorts = false;
+
+const shortsFabIcon = document.getElementById('shorts-fab-icon');
+if (shortsFabIcon) shortsFabIcon.innerHTML = ICONS_SHORTS.play;
+
+async function fetchDynamicShorts() {
+  if (isFetchingShorts) return;
+  isFetchingShorts = true;
+
+  try {
+    const fetchFromChannel = async (channelId, channelName) => {
+      const url = `https://www.googleapis.com/youtube/v3/search?key=${YT_API_KEY}&channelId=${channelId}&part=snippet,id&order=date&maxResults=8&type=video`;
+      const response = await fetch(url);
+      const data = await response.json();
+      return (data.items || []).map(item => ({
+        videoId: item.id.videoId,
+        title: item.snippet.title,
+        channel: channelName,
+        caption: item.snippet.title
+      }));
+    };
+
+    const [toroShorts, bunShorts] = await Promise.all([
+      fetchFromChannel(YT_CHANNEL_ID, 'Toroczkai László'),
+      fetchFromChannel(BUN_CHANNEL_ID, 'Bűnvadászok')
+    ]);
+
+    DYNAMIC_SHORTS = [...toroShorts, ...bunShorts];
+    // Shuffle the list
+    DYNAMIC_SHORTS.sort(() => Math.random() - 0.5);
+
+    if (DYNAMIC_SHORTS.length === 0) {
+      // Fallback to some defaults if API fails or returns nothing
+      DYNAMIC_SHORTS = [
+        {videoId: 'WMvSeHCav-k', title: 'Toroczkai László legfrissebb', channel: 'Toroczkai László', caption: 'Kovetek App Shorts Prototípus'},
+        {videoId: 'UC-ZBFbpGZvE', title: 'Bűnvadászok Pillanatkép', channel: 'Bűnvadászok', caption: 'Kovetek App Shorts Prototípus'}
+      ];
+    }
+
+    buildShortsSlides();
+  } catch (err) {
+    console.error('Shorts betöltési hiba:', err);
+  } finally {
+    isFetchingShorts = false;
+  }
+}
 
 function buildShortsSlides() {
   if (!shortsStage) return;
+  if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
+    setTimeout(buildShortsSlides, 200);
+    return;
+  }
   shortsStage.innerHTML = '';
-  SHORTS.forEach((s, i) => {
+  shortsPlayers = {};
+
+  DYNAMIC_SHORTS.forEach((s, i) => {
     const slide = document.createElement('div');
     slide.className = 'shorts-slide' + (i === 0 ? ' active' : '');
     slide.dataset.index = i;
+    slide.dataset.videoId = s.videoId;
     slide.innerHTML = `
-      <video src="${s.src}" poster="${s.poster}" playsinline muted loop preload="metadata"></video>
-      <div class="shorts-gradient-top"></div>
-      <div class="shorts-gradient-bottom"></div>
-      <div class="shorts-progress">${SHORTS.map(() => '<span><i></i></span>').join('')}</div>
-      <button type="button" class="shorts-close" id="shorts-close-${i}">${ICONS_SHORTS.close}</button>
-      <button type="button" class="shorts-mute" id="shorts-mute-${i}">${ICONS_SHORTS.volOff}</button>
+      <div id="player-${s.videoId}" style="width:100%; height:100%;"></div>
+      <div class="shorts-progress">${DYNAMIC_SHORTS.map(() => '<span><i></i></span>').join('')}</div>
       <div class="shorts-caption">
         <p class="ch">${ICONS_SHORTS.play} ${s.channel}</p>
         <p class="cap">${s.caption}</p>
       </div>
       <div class="shorts-actions">
         <button type="button" class="shorts-like"><span class="a-icon">${ICONS_SHORTS.heart}</span>Tetszik</button>
-        <button type="button"><span class="a-icon">${ICONS_SHORTS.comment}</span>Komment</button>
-        <button type="button"><span class="a-icon">${ICONS_SHORTS.share}</span>Megosztás</button>
+        <button type="button" onclick="event.stopPropagation(); openComments('${s.videoId}', '${s.title.replace(/'/g, "\\'")}')"><span class="a-icon"><img src="assets/comment.png" alt="Comment"></span>Komment</button>
+        <button type="button" onclick="event.stopPropagation(); shareVideo(event, '${s.title.replace(/'/g, "\\'")}', '${s.videoId}')"><span class="a-icon">${ICONS_SHORTS.share}</span>Megosztás</button>
       </div>
       <div class="shorts-nav-zone">
         <div class="zone" data-zone="prev"></div>
         <div class="zone" data-zone="next"></div>
-      </div>
-      <div class="shorts-hint">Koppints fel/le a váltáshoz</div>`;
+      </div>`;
     shortsStage.appendChild(slide);
 
-    slide.querySelector(`#shorts-close-${i}`).addEventListener('click', closeShorts);
-    slide.querySelector(`#shorts-mute-${i}`).addEventListener('click', toggleShortsMute);
     slide.querySelector('.shorts-like').addEventListener('click', (e) => {
+      e.stopPropagation();
       e.currentTarget.classList.toggle('liked');
     });
+
     slide.querySelectorAll('.shorts-nav-zone .zone').forEach(zone => {
-      zone.addEventListener('click', () => {
+      zone.addEventListener('click', (e) => {
+        e.stopPropagation();
         if (zone.dataset.zone === 'next') goToShort(shortsIndex + 1);
         else goToShort(shortsIndex - 1);
       });
     });
+
+    // Initialize YouTube Player for this slide
+    // We only initialize the current, next and previous for performance if needed,
+    // but here we just prepare them all for simplicity in this prototype.
+    shortsPlayers[s.videoId] = new YT.Player(`player-${s.videoId}`, {
+      videoId: s.videoId,
+      playerVars: {
+        autoplay: 0,
+        controls: 0,
+        rel: 0,
+        modestbranding: 1,
+        loop: 1,
+        playlist: s.videoId, // Required for loop
+        playsinline: 1,
+        iv_load_policy: 3
+      },
+      events: {
+        onReady: (event) => {
+          if (shortsMuted) event.target.mute();
+          if (Number(slide.dataset.index) === shortsIndex && shortsOverlay.classList.contains('open')) {
+            event.target.playVideo();
+          }
+        },
+        onStateChange: (event) => {
+          if (event.data === YT.PlayerState.ENDED) {
+            event.target.playVideo(); // Force loop
+          }
+        }
+      }
+    });
   });
+  updateProgressUI();
 }
 
 function updateProgressUI() {
   document.querySelectorAll('.shorts-slide').forEach(slide => {
     const idx = Number(slide.dataset.index);
     slide.querySelectorAll('.shorts-progress span').forEach((bar, i) => {
-      bar.classList.toggle('done', i < idx || (idx === shortsIndex && i < shortsIndex));
+      bar.classList.toggle('done', i < shortsIndex);
+      const inner = bar.querySelector('i');
+      if (inner) {
+        inner.style.width = (i === shortsIndex) ? '50%' : (i < shortsIndex ? '100%' : '0%');
+      }
     });
   });
 }
 
 function goToShort(newIndex) {
-  if (newIndex < 0 || newIndex >= SHORTS.length) return;
+  if (newIndex < 0 || newIndex >= DYNAMIC_SHORTS.length) return;
+
+  const oldVideoId = DYNAMIC_SHORTS[shortsIndex].videoId;
+  if (shortsPlayers[oldVideoId]) {
+    shortsPlayers[oldVideoId].pauseVideo();
+  }
+
+  shortsIndex = newIndex;
+  const newVideoId = DYNAMIC_SHORTS[shortsIndex].videoId;
+
   const slides = document.querySelectorAll('.shorts-slide');
   slides.forEach(s => {
-    const video = s.querySelector('video');
-    s.classList.toggle('active', Number(s.dataset.index) === newIndex);
-    if (Number(s.dataset.index) === newIndex) {
-      video.currentTime = 0;
-      video.muted = shortsMuted;
-      video.play().catch(() => {});
-    } else {
-      video.pause();
-    }
+    s.classList.toggle('active', Number(s.dataset.index) === shortsIndex);
   });
-  shortsIndex = newIndex;
+
+  if (shortsPlayers[newVideoId]) {
+    if (shortsMuted) shortsPlayers[newVideoId].mute();
+    else shortsPlayers[newVideoId].unMute();
+    shortsPlayers[newVideoId].seekTo(0);
+    shortsPlayers[newVideoId].playVideo();
+  }
+
   updateProgressUI();
 }
 
-function openShorts() {
+async function openShorts() {
   if (!shortsOverlay) return;
-  buildShortsSlides();
+  document.querySelector('.phone').classList.add('shorts-active');
+  if (DYNAMIC_SHORTS.length === 0) {
+    await fetchDynamicShorts();
+  }
   shortsIndex = 0;
   shortsOverlay.classList.add('open');
-  const firstVideo = shortsStage.querySelector('.shorts-slide[data-index="0"] video');
-  if (firstVideo) {
-    firstVideo.muted = shortsMuted;
-    firstVideo.play().catch(() => {});
+  const firstVideoId = DYNAMIC_SHORTS[0]?.videoId;
+  if (firstVideoId && shortsPlayers[firstVideoId]) {
+    if (shortsMuted) shortsPlayers[firstVideoId].mute();
+    else shortsPlayers[firstVideoId].unMute();
+    shortsPlayers[firstVideoId].playVideo();
   }
 }
 
 function closeShorts() {
   if (!shortsOverlay) return;
+  document.querySelector('.phone').classList.remove('shorts-active');
   shortsOverlay.classList.remove('open');
-  document.querySelectorAll('#shorts-stage video').forEach(v => v.pause());
+  Object.values(shortsPlayers).forEach(p => p.pauseVideo());
 }
 
 function toggleShortsMute() {
   shortsMuted = !shortsMuted;
-  document.querySelectorAll('#shorts-stage video').forEach(v => { v.muted = shortsMuted; });
-  document.querySelectorAll('.shorts-mute').forEach(btn => {
-    btn.innerHTML = shortsMuted ? ICONS_SHORTS.volOff : ICONS_SHORTS.volOn;
-  });
+  const currentVideoId = DYNAMIC_SHORTS[shortsIndex]?.videoId;
+  if (currentVideoId && shortsPlayers[currentVideoId]) {
+    if (shortsMuted) shortsPlayers[currentVideoId].mute();
+    else shortsPlayers[currentVideoId].unMute();
+  }
+  const muteBtn = document.getElementById('global-shorts-mute');
+  if (muteBtn) {
+    muteBtn.innerHTML = shortsMuted ? ICONS_SHORTS.volOff : ICONS_SHORTS.volOn;
+  }
 }
 
 const shortsFab = document.getElementById('shorts-fab');
@@ -2042,10 +3176,12 @@ function showSocialSubview(viewName) {
 }
 
 document.querySelectorAll('.social-bottom-bar button').forEach(button => {
-  button.addEventListener('click', () => showSocialSubview(button.dataset.socialView || 'home'));
+  button.addEventListener('click', () => {
+    if (button.dataset.socialView) showSocialSubview(button.dataset.socialView);
+  });
 });
 
-showSocialSubview('home');
+showSocialSubview('posts');
 
 function openDetail(a){
   document.getElementById('detail-cat').textContent = a.category;
@@ -2060,9 +3196,41 @@ document.getElementById('back-btn').addEventListener('click', () => {
 
 function setTab(tab){
   if (!tab) return;
+
+  const phone = document.querySelector('.phone');
+  if (phone) {
+    phone.classList.toggle('hirek-mode', tab === 'hirek');
+    phone.classList.toggle('social-mode', tab === 'social');
+    if (tab === 'social') showSocialSubview('posts');
+  }
+
+  // Logo csere logikája
+  const brandLogo = document.querySelector('.brand-logo');
+  if (brandLogo) {
+    // Alapértelmezett stílus visszaállítása
+    brandLogo.style.borderRadius = '50%';
+    brandLogo.style.background = 'transparent';
+    brandLogo.style.objectFit = 'cover';
+    brandLogo.style.aspectRatio = '1/1';
+    brandLogo.style.height = '90px';
+    brandLogo.style.width = 'auto';
+    brandLogo.style.transform = 'translate(-50%, -50%) scale(1.0)';
+
+    if (tab === 'hirek') {
+      brandLogo.src = 'assets/bunvadaszok2.jpg';
+    } else if (tab === 'jeloltek') {
+      brandLogo.src = 'assets/pajtars.jpg';
+    } else if (tab === 'egyeb') {
+      brandLogo.src = 'assets/hazaivasar.jpg';
+      brandLogo.style.background = 'var(--green-dark)';
+    } else {
+      // Itt a 'rolunk' (Fekete István) és minden más esetben a koveteklogo jelenik meg
+      brandLogo.src = 'assets/koveteklogo.png';
+    }
+  }
+
   const tabButtons = document.querySelectorAll('button[data-tab]');
   const views = document.querySelectorAll('.view');
-  const phone = document.querySelector('.phone');
   const headerTitle = document.querySelector('.header-title');
   const filterToggle = document.getElementById('filter-toggle');
   const filterPanel = document.getElementById('filter-panel');
@@ -2121,6 +3289,9 @@ window.setTab = setTab;
 window.addEventListener('load', () => {
   initThumbnails();
   setTab('fooldal');
+  fetchLatestVideos(); // API adatok lekérése indításkor
+  fetchBunVideos(); // Bűnvadászok videók lekérése
+  fetchChannelVideoPool(); // Végtelen, véletlenszerű Bejegyzések-feedhez
 });
 </script>
 
