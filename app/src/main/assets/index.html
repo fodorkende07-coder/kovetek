@@ -1,0 +1,2129 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#688D1B">
+<title>Követek — App prototípus</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root{
+    --green-dark:#1F3A0D;
+    --green:#4F7A1C;
+    --green-mid:#6E9C2E;
+    --green-light:#9CCB55;
+    --green-soft:#E7F1D6;
+    --paper:#F6F7F1;
+    --ink:#16210C;
+    --ink-soft:#5B6650;
+    --ink-faint:#8A9280;
+    --line:#E7E9DE;
+    --white:#ffffff;
+    --surface:rgba(255,255,255,0.96);
+    --surface-strong:rgba(255,255,255,0.99);
+    --radius:16px;
+    --radius-sm:11px;
+    --priority:#0B0B0B;
+    --priority-light:#1A1A1A;
+    --priority-text:#ffffff;
+    --accent:#D3231F;
+    --accent-dark:#9E1712;
+    --accent-soft:rgba(211,35,31,0.12);
+    --shadow-soft:0 10px 26px -16px rgba(22,33,12,0.22);
+    --shadow-card:0 14px 34px -20px rgba(22,33,12,0.28);
+    --shadow-strong:0 24px 60px -24px rgba(22,33,12,0.4);
+  }
+  *{box-sizing:border-box; -webkit-backface-visibility: hidden;}
+  html,body{margin:0;padding:0; height:100%; width:100%;}
+  body{
+    font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+    background: #f6f7f1; /* Simplified background for performance */
+    color:var(--ink);
+    overflow: hidden;
+  }
+
+  /* ---------- Phone frame (demo shell) ---------- */
+  .phone{
+    width:360px;
+    max-width:100%;
+    height:780px;
+    max-height:calc(100vh - 48px);
+    background:var(--paper);
+    border-radius:44px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    text-align:left;
+    box-shadow:
+      0 2px 0 rgba(255,255,255,0.6) inset,
+      0 0 0 9px #0e140a,
+      0 0 0 11px rgba(255,255,255,0.06),
+      var(--shadow-strong);
+  }
+  .phone::before{
+    content:"";
+    position:absolute;
+    top:9px; left:50%;
+    transform:translateX(-50%);
+    width:96px; height:22px;
+    background:#0e140a;
+    border-radius:0 0 16px 16px;
+    z-index:50;
+  }
+
+  /* ---------- Header ---------- */
+  header.app-header{
+    background: linear-gradient(150deg,var(--green-dark) 0%, var(--green) 100%);
+    padding: calc(16px + env(safe-area-inset-top)) 16px 8px; /* Added safe area top */
+    color:var(--white);
+    flex-shrink:0;
+    position:relative;
+    box-shadow:0 8px 16px rgba(0,0,0,0.2);
+  }
+  .brand-row{
+    position:relative;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    width:100%;
+    height:150px;
+    min-height:100px;
+  }
+  .brand-row .brand-logo{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%, -50%) scale(1.8);
+    max-height:100%;
+    width: auto !important;
+    height: 110px;
+    aspect-ratio: 1/1;
+    object-fit:cover;
+    margin-top: 5px;
+    border-radius: 50%;
+  }
+  .brand-row .tag{
+    position:absolute;
+    right:0;
+    top:10px;
+    margin-left:0;
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:.09em;
+    text-transform:uppercase;
+    background:rgba(255,255,255,0.16);
+    backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,0.22);
+    color:var(--white);
+    padding:4px 10px;
+    border-radius:999px;
+  }
+  .header-actions{
+    position:absolute;
+    right:16px;
+    top:18px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .filter-toggle .bars{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+  }
+  .filter-toggle .bars span{
+    display:block;
+    width:16px;
+    height:2px;
+    background:currentColor;
+    border-radius:2px;
+  }
+  .header-title{
+    font-size:23px;
+    font-weight:800;
+    margin:6px 0 0;
+    letter-spacing:-0.015em;
+    text-align: center;
+    text-shadow:0 2px 10px rgba(0,0,0,0.18);
+    margin-top: 25px; /* Increased for better spacing with smaller logo */
+  }
+  .header-sub{
+    font-size:12.5px;
+    color:rgba(255,255,255,0.8);
+  }
+
+  /* ---------- Tabs ---------- */
+  .tabber{
+    display:flex;
+    gap:3px;
+    padding:6px;
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:999px;
+    box-shadow:var(--shadow-soft);
+    flex-shrink:0;
+    position:relative;
+    z-index:1;
+    margin:0 14px 8px;
+  }
+
+  .tabber2{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    padding:0;
+    background:transparent;
+    border:none;
+    box-shadow:none;
+    flex-shrink:0;
+    position:relative;
+    z-index:1;
+    margin:14px 14px 6px;
+  }
+
+  .home-back-btn{
+    position:absolute;
+    left:16px;
+    top:18px;
+    appearance:none;
+    border:none;
+    background:rgba(255,255,255,0.14);
+    color:var(--white);
+    font-size:18px;
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    cursor:pointer;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+    line-height:1;
+    transition:background .15s ease, transform .15s ease;
+  }
+  .home-back-btn:active{transform:scale(0.92); background:rgba(255,255,255,0.24);}
+
+  .tabber button,
+  .tabber2 button{
+    appearance:none;
+    border:none;
+    background:transparent;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.01em;
+    color:var(--ink-soft);
+    padding:5px 6px;
+    cursor:pointer;
+    border-radius:999px;
+    transition:background .2s ease, color .2s ease, box-shadow .2s ease, transform .12s ease;
+    min-width:0;
+    line-height:1.1;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    -webkit-tap-highlight-color:transparent;
+    outline:none;
+  }
+
+  .tabber button{
+    flex:1 1 0;
+    padding:8px 6px;
+  }
+
+  .tabber2 button{
+    flex:1 1 calc(33.333% - 8px);
+    background:var(--white);
+    border:1px solid var(--line);
+    padding:10px 8px;
+    min-width:0;
+    box-shadow:var(--shadow-soft);
+  }
+
+  .tabber button:active,
+  .tabber2 button:active{
+    transform:scale(0.96);
+  }
+
+  .tabber button.active,
+  .tabber2 button.active{
+    color:var(--white);
+    background:linear-gradient(135deg,var(--green-dark),var(--green-mid));
+    box-shadow:0 8px 18px -10px rgba(31,58,13,0.55);
+  }
+  .tabber2 button.active{border-color:transparent;}
+
+  .phone.hirek-mode .tabber button.active,
+  .phone.hirek-mode .tabber2 button.active{
+    color:var(--white);
+    background:linear-gradient(135deg,var(--accent-dark),var(--accent));
+    box-shadow:0 8px 18px -10px rgba(193,27,27,0.55);
+  }
+
+  .phone.hirek-mode header.app-header{
+    background:linear-gradient(150deg,#000 0%, var(--priority-light) 100%);
+  }
+  .phone.hirek-mode .header-title,
+  .phone.hirek-mode .brand-row .tag{
+    color:var(--priority-text);
+  }
+  .phone.hirek-mode .brand-row{
+    opacity:0;
+    pointer-events:none;
+  }
+  .phone.hirek-mode .home-back-btn{
+    display:flex;
+  }
+  .phone.hirek-mode .tabber,
+  .phone.hirek-mode .tabber2,
+  .phone.hirek-mode nav.bottom-nav{
+    display:none;
+  }
+  .phone.hirek-mode .screen{
+    background:transparent;
+    padding-top:16px;
+  }
+  .phone.hirek-mode .section-label{
+    color:var(--accent);
+  }
+  .phone.hirek-mode .section-label::before{
+    background:linear-gradient(180deg,var(--accent),var(--accent-dark));
+  }
+  .phone.hirek-mode .view{
+    background:transparent;
+  }
+
+  .hirek-panel{
+    background:
+      radial-gradient(circle at 90% 0%, rgba(211,35,31,0.18), transparent 55%),
+      linear-gradient(160deg,#161616 0%, #0a0a0a 100%);
+    color:var(--priority-text);
+    border-radius:22px;
+    border:1px solid rgba(211,35,31,0.45);
+    padding:22px;
+    min-height:240px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    box-shadow:0 20px 44px -26px rgba(0,0,0,0.7);
+  }
+  .hirek-panel h2{
+    margin:0;
+    font-size:22px;
+    line-height:1.1;
+  }
+  .hirek-panel p{
+    margin:0;
+    font-size:13.5px;
+    color:rgba(255,255,255,0.82);
+    line-height:1.6;
+  }
+
+  /* ---------- Content ---------- */
+  .screen{
+    flex:1;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    background:
+      radial-gradient(circle at 100% 0%, rgba(111,157,50,0.06), transparent 40%);
+    padding-bottom: env(safe-area-inset-bottom); /* Added safe area bottom */
+  }
+  .screen::-webkit-scrollbar{width:0;}
+  .view{display:none; padding:14px; animation:fadeIn .22s ease;}
+  .view.active{display:block;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+  .view#view-social{position:relative; min-height:100%; padding-bottom:86px;}
+  .view .about-card,
+  .view .social-bottom-bar,
+  .view .search-card,
+  .view .cand-grid,
+  .view .empty-state{
+    text-align:left;
+  }
+
+  /* News cards */
+  .news-card{
+    display:flex;
+    gap:12px;
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:11px;
+    margin-bottom:10px;
+    cursor:pointer;
+    box-shadow:var(--shadow-soft);
+    transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+  }
+  .news-card:active{transform:scale(0.98);}
+  .news-card:hover{box-shadow:var(--shadow-card); border-color:var(--green-light);}
+  .news-thumb{
+    width:64px; height:64px;
+    flex-shrink:0;
+    border-radius:12px;
+    overflow:hidden;
+    background:linear-gradient(150deg,var(--green-soft),var(--green-light));
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,0.04);
+  }
+  .news-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .news-meta{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:10.5px;
+    font-weight:700;
+    color:var(--green-dark);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin-bottom:3px;
+  }
+  .news-meta .dot{width:3px;height:3px;background:var(--ink-faint);border-radius:50%;}
+  .news-meta .date{color:var(--ink-faint); font-weight:600; text-transform:none;}
+  .news-title{
+    font-size:13.5px;
+    font-weight:700;
+    line-height:1.3;
+    margin:0 0 3px;
+    color:var(--ink);
+  }
+  .news-summary{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    line-height:1.4;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+
+  .section-label{
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.09em;
+    color:var(--green-dark);
+    margin:4px 0 12px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .section-label::before{
+    content:"";
+    width:4px; height:14px;
+    border-radius:3px;
+    background:linear-gradient(180deg,var(--green-mid),var(--green-dark));
+    display:inline-block;
+  }
+
+  /* Candidates grid */
+  .cand-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+  .cand-card{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+    text-align:center;
+    padding-bottom:11px;
+    box-shadow:var(--shadow-card);
+    transition:transform .16s ease, box-shadow .16s ease;
+  }
+  .cand-card:hover{transform:translateY(-2px); box-shadow:var(--shadow-strong);}
+  .cand-photo{
+    width:100%;
+    aspect-ratio:1/1;
+    object-fit:cover;
+    display:block;
+    background:linear-gradient(150deg,var(--green-soft),var(--green-light));
+  }
+  .cand-name{
+    font-size:12.5px;
+    font-weight:700;
+    margin-top:9px;
+    padding:0 6px;
+    line-height:1.25;
+    color:var(--ink);
+  }
+  .cand-role{
+    font-size:10px;
+    font-weight:600;
+    color:var(--green-dark);
+    margin-top:3px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  .search-card{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:11px 13px;
+    margin-bottom:12px;
+    box-shadow:var(--shadow-soft);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    transition:box-shadow .18s ease, border-color .18s ease;
+  }
+  .search-card:focus-within{border-color:var(--green-mid); box-shadow:var(--shadow-card);}
+  .search-card input{
+    flex:1;
+    border:none;
+    outline:none;
+    font-size:13px;
+    color:var(--ink);
+    background:transparent;
+  }
+  .search-card input::placeholder{color:var(--ink-faint);}
+  .filter-toggle{
+    appearance:none;
+    border:none;
+    background:var(--green-soft);
+    color:var(--green-dark);
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+    flex-shrink:0;
+    transition:background .15s ease;
+  }
+  .filter-toggle:active{background:var(--green-light);}
+  .filter-toggle .bars{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+  }
+  .filter-toggle .bars span{
+    display:block;
+    width:16px;
+    height:2px;
+    background:currentColor;
+    border-radius:2px;
+  }
+  .empty-state{
+    text-align:center;
+    color:var(--ink-faint);
+    font-size:12.5px;
+    padding:20px 8px 0;
+  }
+  .filter-panel{
+    position:absolute;
+    top:56px;
+    right:14px;
+    width:min(280px, calc(100vw - 28px));
+    background:var(--surface-strong);
+    backdrop-filter:blur(10px);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:14px;
+    box-shadow:var(--shadow-strong);
+    display:none;
+    z-index:40;
+    max-height:60vh;
+    overflow:auto;
+  }
+  .filter-panel.open{display:block;}
+  .filter-panel h3{
+    margin:0 0 10px;
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--ink-soft);
+  }
+  .filter-chips{display:flex; flex-wrap:wrap; gap:8px;}
+  .filter-chip{
+    border:1px solid var(--line);
+    background:var(--white);
+    color:var(--ink-soft);
+    border-radius:999px;
+    padding:6px 11px;
+    font-size:11px;
+    font-weight:700;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .filter-chip.active{
+    background:linear-gradient(135deg,var(--green-dark),var(--green-mid));
+    color:var(--white);
+    border-color:transparent;
+  }
+
+  /* Article detail overlay */
+  .detail{
+    position:absolute;
+    top:0; left:0; right:0; bottom:0;
+    background:var(--paper);
+    transform:translateY(100%);
+    visibility:hidden;
+    transition:transform .32s cubic-bezier(.22,.9,.32,1), visibility 0s linear .32s;
+    z-index:30;
+    display:flex;
+    flex-direction:column;
+  }
+  .detail.open{
+    transform:translateY(0);
+    visibility:visible;
+    transition:transform .32s cubic-bezier(.22,.9,.32,1);
+  }
+  .detail-header{
+    background:
+      radial-gradient(circle at 10% -20%, rgba(255,255,255,0.14), transparent 55%),
+      linear-gradient(150deg,var(--green-dark) 0%, var(--green) 78%);
+    padding:44px 16px 18px;
+    color:var(--white);
+    flex-shrink:0;
+  }
+  .back-btn{
+    appearance:none;
+    border:none;
+    background:rgba(255,255,255,0.16);
+    color:var(--white);
+    width:30px;height:30px;
+    border-radius:50%;
+    font-size:16px;
+    cursor:pointer;
+    margin-bottom:12px;
+    transition:background .15s ease, transform .15s ease;
+  }
+  .back-btn:active{transform:scale(0.92); background:rgba(255,255,255,0.26);}
+  .detail-cat{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.85;}
+  .detail-title{font-size:19.5px;font-weight:800;margin:7px 0 0;line-height:1.28;}
+  .detail-body{
+    padding:18px 16px;
+    font-size:13.5px;
+    line-height:1.65;
+    color:var(--ink);
+    overflow-y:auto;
+  }
+  .detail-body .src{
+    font-size:11.5px;
+    color:var(--ink-faint);
+    margin-bottom:14px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+
+  /* Bottom nav */
+  nav.bottom-nav{
+    display:flex;
+    border-top:1px solid var(--line);
+    background:var(--white);
+    flex-shrink:0;
+    padding:6px 8px calc(6px + env(safe-area-inset-bottom));
+  }
+  nav.bottom-nav button{
+    appearance:none;
+    border:none;
+    background:transparent;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    padding:6px 2px;
+    cursor:pointer;
+    color:var(--ink-soft);
+    font-size:10px;
+    font-weight:700;
+  }
+  nav.bottom-nav button.active{color:var(--green-dark);}
+  nav.bottom-nav .icon{
+    width:20px;height:20px;
+    border-radius:6px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  nav.bottom-nav button.active .icon{background:var(--green-light);}
+
+  .about-card{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px;
+    text-align:center;
+    box-shadow:var(--shadow-soft);
+  }
+  .social-bottom-bar{
+    position:absolute;
+    left:14px;
+    right:14px;
+    bottom:12px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    padding:8px 10px;
+    background:rgba(255,255,255,0.98);
+    backdrop-filter:blur(10px);
+    border:1px solid var(--line);
+    border-radius:999px;
+    box-shadow:var(--shadow-strong);
+    z-index:5;
+  }
+  .social-bottom-bar button{
+    appearance:none;
+    border:none;
+    background:transparent;
+    color:var(--ink-soft);
+    font-size:10.5px;
+    font-weight:700;
+    padding:7px 8px;
+    cursor:pointer;
+    border-radius:999px;
+    transition:background .15s ease, color .15s ease;
+    flex:1;
+  }
+  .social-bottom-bar button:active,
+  .social-bottom-bar button.active{
+    background:linear-gradient(135deg,var(--green-soft),var(--green-light));
+    color:var(--green-dark);
+  }
+  .social-bottom-bar .home-icon{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--green-soft);
+    padding:0;
+    overflow:hidden;
+    border:1px solid var(--line);
+    flex:0 0 auto;
+    box-shadow:0 4px 10px -6px rgba(31,58,13,0.4);
+  }
+  .social-bottom-bar .home-icon img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .social-subview{
+    display:none;
+  }
+  .social-subview.active{
+    display:block;
+  }
+  .social-card-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-top:8px;
+  }
+  .social-card-list .mini-card{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:13px;
+    box-shadow:var(--shadow-soft);
+    transition:box-shadow .16s ease, transform .16s ease;
+  }
+  .social-card-list .mini-card:hover{transform:translateY(-2px); box-shadow:var(--shadow-card);}
+  .social-card-list .mini-card h3{
+    margin:0 0 4px;
+    font-size:13px;
+    color:var(--green-dark);
+  }
+  .social-card-list .mini-card p{
+    margin:0;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    line-height:1.45;
+  }
+  .about-card img{width:140px; aspect-ratio:1/1; object-fit:cover; border-radius:50%; margin:6px 0 14px; filter:drop-shadow(0 8px 16px rgba(31,58,13,0.18));}
+  .about-card p{font-size:12.5px; color:var(--ink-soft); line-height:1.6;}
+
+  /* ---------- Módul-rács (Főoldal) ---------- */
+  .module-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  .module-card{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px;
+    box-shadow:var(--shadow-soft);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    min-height:126px;
+    cursor:pointer;
+    transition:transform .16s ease, box-shadow .16s ease;
+    position:relative;
+    text-align:left;
+  }
+  .module-card:hover{transform:translateY(-2px); box-shadow:var(--shadow-card);}
+  .module-card.locked{cursor:default; opacity:.82;}
+  .module-card.locked:hover{transform:none; box-shadow:var(--shadow-soft);}
+  .module-icon{
+    width:34px; height:34px;
+    border-radius:10px;
+    background:var(--green-soft);
+    color:var(--green-dark);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .module-icon svg{width:18px;height:18px;}
+  .module-lock{
+    position:absolute; top:12px; right:12px;
+    width:22px;height:22px;
+    border-radius:50%;
+    background:var(--green-soft);
+    color:var(--ink-faint);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .module-lock svg{width:11px;height:11px;}
+  .module-title{font-size:13.5px; font-weight:800; color:var(--ink); margin:0;}
+  .module-desc{font-size:11px; color:var(--ink-soft); line-height:1.4; margin:0; flex:1;}
+  .module-link{font-size:11.5px; font-weight:700; color:var(--green-dark); margin-top:auto;}
+  .module-soon{font-size:11px; font-weight:700; color:var(--ink-faint); margin-top:auto;}
+
+  /* ---------- Térkép-kártya ---------- */
+  .map-card{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:8px;
+    box-shadow:var(--shadow-soft);
+    margin-bottom:4px;
+  }
+  .map-preview{
+    position:relative;
+    height:150px;
+    border-radius:12px;
+    overflow:hidden;
+    background:linear-gradient(135deg, #dfe9cd 0%, #cddcae 45%, #b9cf94 100%);
+  }
+  .map-container {
+    width: 100%;
+    height: 100%;
+  }
+  /* Fullscreen map support */
+  .map-preview.fullscreen {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 2000 !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+  .map-preview.fullscreen .map-container {
+    border-radius: 0 !important;
+  }
+  .map-control-btn {
+    position: absolute;
+    z-index: 3000;
+    width: 44px;
+    height: 44px;
+    background: var(--white);
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    cursor: pointer;
+    color: var(--green-dark);
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .map-control-btn:active { transform: scale(0.9); }
+  .map-expand-btn { top: 12px; right: 12px; }
+  .map-back-btn {
+    bottom: 80px;
+    left: 20px;
+    display: none;
+    z-index: 3001;
+  }
+  .map-preview.fullscreen .map-back-btn { display: flex; }
+  .map-preview.fullscreen .map-expand-btn { display: none; }
+
+  .map-open{
+    position:absolute; right:8px; bottom:8px;
+    background:rgba(15,20,10,0.72);
+    color:var(--white);
+    font-size:10.5px;
+    font-weight:700;
+    padding:6px 10px;
+    border:none;
+    border-radius:999px;
+    display:flex; align-items:center; gap:4px;
+    backdrop-filter:blur(4px);
+    cursor:pointer;
+    z-index:2;
+  }
+
+  /* ---------- Jelölt-carousel ---------- */
+  .candidate-carousel{
+    display:flex;
+    gap:12px;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    padding:2px 2px 6px;
+    -webkit-overflow-scrolling:touch;
+    margin:0 -14px;
+    padding-left:14px;
+    padding-right:14px;
+  }
+  .candidate-carousel::-webkit-scrollbar{height:0;}
+  .candidate-slide{
+    scroll-snap-align:start;
+    flex:0 0 82%;
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px 16px;
+    box-shadow:var(--shadow-card);
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+  }
+  .candidate-slide img{
+    width:84px; height:84px;
+    border-radius:50%;
+    object-fit:cover;
+    border:3px solid var(--green-soft);
+    margin-bottom:4px;
+    background:var(--green-soft);
+  }
+  .candidate-slide h3{margin:0; font-size:16px; color:var(--ink);}
+  .candidate-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    background:var(--green-soft);
+    color:var(--green-dark);
+    font-size:10.5px;
+    font-weight:700;
+    padding:4px 10px;
+    border-radius:999px;
+  }
+  .candidate-role{font-size:11.5px; font-weight:800; color:var(--green-dark); text-transform:uppercase; letter-spacing:.03em;}
+  .candidate-desc{font-size:11.5px; color:var(--ink-soft); line-height:1.5;}
+  .carousel-dots{
+    display:flex;
+    justify-content:center;
+    gap:5px;
+    margin-top:8px;
+  }
+  .carousel-dots span{
+    width:5px;height:5px;
+    border-radius:50%;
+    background:var(--line);
+  }
+  .carousel-dots span:first-child{background:var(--green-dark); width:14px; border-radius:4px;}
+
+  /* ---------- Csatorna / videó kártya ---------- */
+  .channel-card{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px;
+    box-shadow:var(--shadow-soft);
+    margin-bottom:14px;
+  }
+  .channel-head{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .channel-avatar{
+    width:34px;height:34px;
+    border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),var(--accent-dark));
+    color:var(--white);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .channel-avatar svg{width:16px;height:16px;}
+  .channel-name{font-size:13px; font-weight:800; color:var(--ink); margin:0;}
+  .channel-sub{font-size:10.5px; color:var(--ink-faint); margin:0;}
+  .channel-cta{
+    margin-left:auto;
+    font-size:11px;
+    font-weight:700;
+    color:var(--green-dark);
+    white-space:nowrap;
+  }
+  .channel-thumb{
+    position:relative;
+    height:210px;
+    border-radius:12px;
+    overflow:hidden;
+    background-color:#000;
+    background-size: cover;
+    background-position: center;
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-bottom:8px;
+    cursor:pointer;
+    box-shadow: var(--shadow-card);
+  }
+  .channel-thumb iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    z-index: 10;
+    pointer-events: auto;
+  }
+  /* Overlay to make it feel custom and handle clicks */
+  .video-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #000;
+  }
+  .channel-thumb .thumb-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 60%);
+    z-index: 2;
+  }
+  .channel-thumb .custom-play-btn {
+    width: 60px;
+    height: 60px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 4;
+    box-shadow: 0 0 20px rgba(211, 35, 31, 0.5);
+    transition: transform 0.2s ease;
+  }
+  .channel-thumb:active .custom-play-btn {
+    transform: scale(0.9);
+  }
+  .channel-thumb .video-title-overlay {
+    position: absolute;
+    bottom: 12px;
+    left: 14px;
+    right: 14px;
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    z-index: 5;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  }
+  .channel-badge{
+    position:absolute; top:12px; left:12px;
+    background:var(--accent);
+    color:var(--white);
+    font-size:10px;
+    font-weight:800;
+    padding:4px 10px;
+    border-radius:6px;
+    z-index:5;
+  }
+  .channel-play{
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    width:44px;height:44px;
+    border-radius:50%;
+    background:var(--accent);
+    color:var(--white);
+    display:flex;align-items:center;justify-content:center;
+    z-index:2;
+    box-shadow:0 8px 20px -8px rgba(0,0,0,0.6);
+  }
+  .channel-play svg{width:18px;height:18px;}
+  .channel-thumb-title{
+    position:relative;
+    z-index:2;
+    color:var(--white);
+    font-size:12.5px;
+    font-weight:700;
+    line-height:1.3;
+  }
+  .channel-video-title{font-size:13px; font-weight:800; color:var(--ink); margin:0 0 2px;}
+  .channel-video-date{font-size:10.5px; color:var(--ink-faint); margin:0 0 10px;}
+  .channel-more-label{font-size:10.5px; font-weight:800; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px;}
+  .channel-more-row{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:6px;
+  }
+  .channel-more-item{display:flex; flex-direction:column; gap:4px;}
+  .channel-more-thumb{
+    position:relative;
+    height:42px;
+    border-radius:8px;
+    background:linear-gradient(150deg,#222,#000);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .channel-more-thumb svg{width:13px;height:13px; color:var(--white); opacity:.9;}
+  .channel-more-item span{
+    font-size:8.5px;
+    color:var(--ink-soft);
+    line-height:1.25;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+
+  /* ---------- Shorts gomb (FAB) ---------- */
+  .shorts-fab{
+    position:absolute;
+    right:16px;
+    bottom:96px;
+    z-index:40;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:linear-gradient(135deg,var(--accent),var(--accent-dark));
+    color:var(--white);
+    border:none;
+    padding:11px 16px 11px 12px;
+    border-radius:999px;
+    cursor:pointer;
+    box-shadow:0 14px 28px -12px rgba(158,23,18,0.65), 0 0 0 3px rgba(255,255,255,0.55);
+    font-size:12.5px;
+    font-weight:800;
+    letter-spacing:.01em;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .shorts-fab:active{transform:scale(0.94);}
+  .shorts-fab .shorts-fab-icon{
+    width:26px;height:26px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.22);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .shorts-fab .shorts-fab-icon svg{width:13px;height:13px;}
+
+  /* ---------- Shorts lejátszó overlay ---------- */
+  .shorts-overlay{
+    position:absolute;
+    top:0; left:0; right:0; bottom:0;
+    background:#000;
+    z-index:60;
+    display:flex;
+    flex-direction:column;
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transform:translateY(12px);
+    transition:opacity .22s ease, transform .22s ease, visibility 0s linear .22s;
+  }
+  .shorts-overlay.open{
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+    transition:opacity .22s ease, transform .22s ease;
+    transform:translateY(0);
+  }
+  .shorts-stage{
+    position:relative;
+    flex:1;
+    overflow:hidden;
+  }
+  .shorts-slide{
+    position:absolute;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:#000;
+  }
+  .shorts-slide.active{display:flex;}
+  .shorts-slide video{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .shorts-gradient-top,
+  .shorts-gradient-bottom{
+    position:absolute;
+    left:0; right:0;
+    height:110px;
+    pointer-events:none;
+    z-index:2;
+  }
+  .shorts-gradient-top{top:0; background:linear-gradient(180deg, rgba(0,0,0,0.55), transparent);}
+  .shorts-gradient-bottom{bottom:0; background:linear-gradient(0deg, rgba(0,0,0,0.7), transparent);}
+  .shorts-close{
+    position:absolute;
+    top:14px; left:14px;
+    z-index:5;
+    width:32px;height:32px;
+    border-radius:50%;
+    border:none;
+    background:rgba(255,255,255,0.16);
+    color:var(--white);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+  }
+  .shorts-close svg{width:15px;height:15px;}
+  .shorts-mute{
+    position:absolute;
+    top:14px; right:14px;
+    z-index:5;
+    width:32px;height:32px;
+    border-radius:50%;
+    border:none;
+    background:rgba(255,255,255,0.16);
+    color:var(--white);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+  }
+  .shorts-mute svg{width:14px;height:14px;}
+  .shorts-caption{
+    position:absolute;
+    left:14px; right:70px; bottom:22px;
+    z-index:5;
+    color:var(--white);
+  }
+  .shorts-caption .ch{font-size:12.5px; font-weight:800; margin:0 0 4px; display:flex; align-items:center; gap:6px;}
+  .shorts-caption .ch svg{width:14px;height:14px;}
+  .shorts-caption .cap{font-size:12px; line-height:1.4; margin:0; opacity:.92;}
+  .shorts-actions{
+    position:absolute;
+    right:12px; bottom:20px;
+    z-index:5;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:16px;
+  }
+  .shorts-actions button{
+    appearance:none;
+    border:none;
+    background:transparent;
+    color:var(--white);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
+    font-size:9.5px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .shorts-actions .a-icon{
+    width:38px;height:38px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.14);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .shorts-actions .a-icon svg{width:17px;height:17px;}
+  .shorts-actions button.liked .a-icon{background:var(--accent);}
+  .shorts-nav-zone{
+    position:absolute;
+    inset:0;
+    z-index:3;
+    display:flex;
+    flex-direction:column;
+  }
+  .shorts-nav-zone .zone{flex:1;}
+  .shorts-progress{
+    position:absolute;
+    top:6px; left:14px; right:14px;
+    z-index:5;
+    display:flex;
+    gap:4px;
+  }
+  .shorts-progress span{
+    flex:1;
+    height:2.5px;
+    border-radius:2px;
+    background:rgba(255,255,255,0.32);
+    overflow:hidden;
+  }
+  .shorts-progress span i{
+    display:block;
+    height:100%;
+    width:0%;
+    background:var(--white);
+  }
+  .shorts-progress span.done i{width:100%;}
+  .shorts-hint{
+    position:absolute;
+    bottom:8px; left:0; right:0;
+    text-align:center;
+    color:rgba(255,255,255,0.55);
+    font-size:10px;
+    z-index:5;
+    pointer-events:none;
+  }
+
+  .hint{
+    text-align:center;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-top:18px;
+    max-width:390px;
+  }
+  /* Mobile: make the demo fill the screen like a native app */
+  @media (max-width: 420px) {
+    html, body { height: 100%; }
+    body { background: var(--paper); padding: 0; }
+    .phone{
+      width:100vw;
+      height:100vh;
+      max-width:100%;
+      max-height:100%;
+      border-radius:0;
+      margin:0;
+      box-shadow:none;
+      position:relative;
+    }
+    .phone::before{ display:none; }
+    header.app-header{ padding:14px 12px 8px; }
+    .brand-row .brand-logo{ height:60px; }
+    .tabber2, .tabber{ margin:10px 12px; }
+    .screen{ padding-bottom:calc(12px + env(safe-area-inset-bottom)); }
+  }
+</style>
+
+<style id="native-app-fullscreen-override">
+/* ===== Fullscreen native-app layout ===== */
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  min-width: 0;
+  background: var(--paper);
+  display: block;
+}
+
+.phone {
+  position: relative;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  min-height: 0;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+
+.phone::before,
+.phone::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* The app itself should occupy the whole viewport. */
+.phone > * {
+  max-width: 100%;
+}
+</style>
+
+</head>
+<body>
+
+<div class="phone">
+  <header class="app-header">
+    <button class="home-back-btn" id="home-back" aria-label="Vissza" onclick="setTab('fooldal')">←</button>
+    <div class="brand-row">
+      <img class="brand-logo" src="assets/koveteklogo.png" alt="logó">
+      <span class="tag">Látványterv</span>
+    </div>
+    <div class="header-title">Főoldal</div>
+  </header>
+
+  <div class="tabber2">
+    <button type="button" class="tab-btn" data-tab="social" onclick="setTab('social')">Social Media</button>
+    <button type="button" class="tab-btn active" data-tab="fooldal" onclick="setTab('fooldal')">Főoldal</button>
+    <button type="button" class="tab-btn" data-tab="kepviseloink" onclick="setTab('kepviseloink')">Képviselőink</button>
+  </div>
+
+  <div class="tabber">
+    <button type="button" class="tab-btn" data-tab="hirek" onclick="setTab('hirek')">Bűnvadászok</button>
+    <button type="button" class="tab-btn" data-tab="jeloltek" onclick="setTab('jeloltek')">Pajtárstábor</button>
+    <button type="button" class="tab-btn" data-tab="rolunk" onclick="setTab('rolunk')">Fekete István</button>
+    <button type="button" class="tab-btn" data-tab="egyeb" onclick="setTab('egyeb')">Hazai Vásár</button>
+  </div>
+
+  <div class="screen">
+    <div class="view active" id="view-fooldal">
+      <div class="section-label">Képviselőjelöltjeink</div>
+      <div class="candidate-carousel" id="candidate-carousel"></div>
+      <div class="carousel-dots" id="carousel-dots"></div>
+
+      <div class="section-label" style="margin-top:20px;">Térkép a közeledben</div>
+      <div class="map-card" id="map-section">
+        <div class="map-preview" id="map-preview-wrapper">
+          <div id="map-preview" class="map-container"></div>
+          <button class="map-control-btn map-expand-btn" onclick="toggleMapFullscreen(true)" aria-label="Nagyítás">
+          </button>
+          <button class="map-control-btn map-back-btn" onclick="toggleMapFullscreen(false)" aria-label="Vissza">
+          </button>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:20px;">Legfrissebb videóink</div>
+      <div class="channel-card">
+        <div class="channel-head">
+          <div class="channel-avatar" id="chan-icon-1"></div>
+          <div>
+            <p class="channel-name">Toroczkai László</p>
+            <p class="channel-sub">YouTube-csatorna</p>
+          </div>
+          <div class="channel-cta" onclick="window.open('https://www.youtube.com/@ToroczkaiLaszloHivatalos', '_blank')" style="cursor:pointer;">Csatorna</div>
+        </div>
+        <div class="channel-thumb" id="video-container-1" data-video-id="dQw4w9WgXcQ" onclick="playVideo('video-container-1', 'dQw4w9WgXcQ')">
+          <div class="channel-badge">ÚJ</div>
+          <div class="custom-play-btn" id="play-icon-1"></div>
+          <div class="thumb-overlay"></div>
+          <div class="video-title-overlay">Élő közvetítés a legfrissebb parlamenti ülésről</div>
+        </div>
+        <p class="channel-video-title">Élő közvetítés a legfrissebb parlamenti ülésről</p>
+        <p class="channel-video-date">2026. júl. 29.</p>
+        <div class="channel-more-label">További videók</div>
+        <div class="channel-more-row" id="chan-more-1"></div>
+      </div>
+
+      <div class="section-label" style="margin-top:20px;">Válassz egy modult</div>
+      <div class="module-grid" id="module-grid"></div>
+    </div>
+
+    <div class="view" id="view-hirek">
+      <div class="section-label">Bűnvadászok</div>
+    </div>
+
+    <div class="view" id="view-jeloltek">
+      <div class="section-label">Pajtárstábor</div>
+    </div>
+
+    <div class="view" id="view-social">
+      <div class="social-subview active" id="social-subview-home">
+        <div class="section-label">Social Media</div>
+        <div class="about-card">
+          <p>Ez a Social Media nézet jelenleg a demo prototype része. Az OpenSource SocialNet beágyazása helyett itt maradt a mobilapplikáció stílusú felület.</p>
+        </div>
+      </div>
+
+      <div class="social-subview" id="social-subview-posts">
+        <div class="section-label">Bejegyzések</div>
+        <div class="about-card">
+          <p>Ez a szekció jelenleg üres. A legfrissebb videókat a Főoldalon találod.</p>
+        </div>
+      </div>
+
+      <div class="social-subview" id="social-subview-profiles">
+        <div class="section-label">Profilok</div>
+        <div class="social-card-list">
+          <div class="mini-card">
+            <h3>Toroczkai László</h3>
+            <p>Profilkártya minta a jövőbeli social felülethez.</p>
+          </div>
+          <div class="mini-card">
+            <h3>Dúró Dóra</h3>
+            <p>Második profil a listában.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="social-subview" id="social-subview-shorts">
+        <div class="section-label">Shorts</div>
+        <div class="social-card-list">
+          <div class="mini-card">
+            <h3>Rövid videó 1</h3>
+            <p>Itt jelennek meg a rövid videók a későbbi appban.</p>
+          </div>
+          <div class="mini-card">
+            <h3>Rövid videó 2</h3>
+            <p>Ez egy placeholder tartalom.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="social-bottom-bar">
+        <button type="button" data-social-view="posts">Bejegyzések</button>
+        <button type="button" data-social-view="profiles">Profilok</button>
+        <button type="button" data-social-view="shorts">Shorts</button>
+        <button type="button" class="home-icon" data-social-view="home" aria-label="Főoldal"><img src="assets/haziko.png" alt="Hazikó"></button>
+      </div>
+    </div>
+
+    <div class="view" id="view-kepviseloink">
+      <div class="section-label">Képviselőink</div>
+      <div class="search-card">
+        <input id="candidate-search" type="search" placeholder="Keress név alapján..." autocomplete="off">
+        <button class="filter-toggle" id="filter-toggle" type="button" aria-label="Szűrés" hidden>
+          <span class="bars" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
+        </button>
+      </div>
+      <div class="filter-panel" id="filter-panel">
+        <h3>Megye</h3>
+        <div class="filter-chips" id="filter-chips"></div>
+      </div>
+      <div class="cand-grid" id="cand-grid"></div>
+      <div class="empty-state" id="candidate-empty" hidden>Nem található ilyen név a jelenlegi listában.</div>
+    </div>
+
+    <div class="view" id="view-rolunk">
+      <div class="about-card">
+        <img src="assets/koveteklogo.png" alt="logó">
+        <p>Ez egy stílus-prototípus, amely a mobilapplikáció eredeti koncepcióját, színvilágát és elrendezését követi, HTML/CSS/JS formában — így könnyebben módosítható és bemutatható, mielőtt elkészül a végleges Flutter-alkalmazás.</p>
+      </div>
+    </div>
+    <div class="view" id="view-egyeb">
+      <div class="about-card">
+        <p></p>
+      </div>
+    </div>
+  </div>
+
+
+
+  <div class="detail" id="detail">
+    <div class="detail-header">
+      <button class="back-btn" id="back-btn">←</button>
+      <div class="detail-cat" id="detail-cat"></div>
+      <div class="detail-title" id="detail-title"></div>
+    </div>
+    <div class="detail-body">
+      <div class="src" id="detail-src"></div>
+      <div id="detail-text"></div>
+    </div>
+  </div>
+
+
+
+  <div class="shorts-overlay" id="shorts-overlay">
+    <div class="shorts-stage" id="shorts-stage">
+      <!-- a shorts-slide elemek JS-ből töltődnek be -->
+    </div>
+  </div>
+</div>
+
+<script>
+const NEWS = [
+  {"title":"Valóban romlik Budapest közbiztonsága?","summary":"Rövid összefoglaló egy önkormányzati témájú közleményről, amely a fővárosi közbiztonság megítélését érinti.","category":"Mi Hazánk","source":"Mi Hazánk","date":"2026-07-05","icon":"mihazank.svg"},
+  {"title":"Soha többé ne fordulhassanak elő ilyen tragédiák!","summary":"Közlemény egy munkavédelmi témájú esetről és az ezzel kapcsolatos felvetésekről.","category":"Mi Hazánk","source":"Mi Hazánk","date":"2026-07-05","icon":"mihazank.svg"},
+  {"title":"Virághalmy Saroltát jelöli a közmédia átmeneti vezetőjének a Mi Hazánk","summary":"Rövid hír egy szervezeti/személyi jellegű bejelentésről.","category":"Mi Hazánk","source":"Mi Hazánk","date":"2026-07-05","icon":"mihazank.svg"},
+  {"title":"Felszólítás a jogtalan kilakoltatások ügyében","summary":"Közlemény egy végrehajtási/lakhatási témát érintő felszólításról.","category":"Mi Hazánk","source":"Mi Hazánk","date":"2026-07-05","icon":"mihazank.svg"},
+  {"title":"Elindult a fórum!","summary":"Bejelentés egy új online fórum indulásáról.","category":"Toroczkai.info","source":"Toroczkai.info","date":"2026-07-05","icon":"toroczkai.svg"},
+  {"title":"Forradalmi program az erős és szabad Magyarországért!","summary":"Programjellegű bejegyzés egy politikai kezdeményezésről.","category":"Toroczkai.info","source":"Toroczkai.info","date":"2026-07-05","icon":"toroczkai.svg"}
+];
+
+const CANDIDATES = [
+  {name:"Toroczkai László", role:"Pártelnök · frakcióvezető", img:"toroczkai_laszlo.jpg", county:"Csongrád-Csanád", desc:"A mozgalom alapító elnöke és országgyűlési frakcióvezetője. A párt listavezetője és legismertebb közszereplője."},
+  {name:"Dúró Dóra", role:"Alelnök", img:"duro_dora.jpg", county:"Pest", desc:"Pest vármegyei jelöltünk. Bővebb bemutatkozás hamarosan a profiljában."},
+  {name:"Novák Előd", role:"Alelnök", img:"novak_elod.jpg", county:"Borsod-Abaúj-Zemplén", desc:"Borsod-Abaúj-Zemplén vármegyei jelöltünk. Bővebb bemutatkozás hamarosan a profiljában."},
+  {name:"Apáti István", role:"Jelölt", img:"apati_istvan.jpg", county:"Baranya", desc:"Baranya vármegyei jelöltünk. Bővebb bemutatkozás hamarosan a profiljában."},
+  {name:"Pakusza Zoltán", role:"Jelölt", img:"pakusza_zoltan.jpg", county:"Győr-Moson-Sopron", desc:"Győr-Moson-Sopron vármegyei jelöltünk. Bővebb bemutatkozás hamarosan a profiljában."},
+  {name:"Borvendég Zsuzsanna", role:"Jelölt", img:"borvendeg_zsuzsanna.jpg", county:"Fejér", desc:"Fejér vármegyei jelöltünk. Bővebb bemutatkozás hamarosan a profiljában."},
+  {name:"Szabadi István", role:"Jelölt", img:"szabadi_istvan.jpg", county:"Veszprém", desc:"Veszprém vármegyei jelöltünk. Bővebb bemutatkozás hamarosan a profiljában."},
+  {name:"Dócs Dávid", role:"Jelölt", img:"docs_david.jpg", county:"Somogy", desc:"Somogy vármegyei jelöltünk. Bővebb bemutatkozás hamarosan a profiljában."}
+];
+const COUNTIES = ["Összes","Bács-Kiskun","Baranya","Békés","Borsod-Abaúj-Zemplén","Budapest","Csongrád-Csanád","Fejér","Győr-Moson-Sopron","Hajdú-Bihar","Heves","Jász-Nagykun-Szolnok","Komárom-Esztergom","Nógrád","Pest","Somogy","Szabolcs-Szatmár-Bereg","Tolna","Vas","Veszprém","Zala"];
+
+/* ---------- Ikonok (inline SVG) ---------- */
+const ICONS = {
+  news: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/></svg>',
+  map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>',
+  calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  people: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14a5 5 0 0 1 5 5"/></svg>',
+  shop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9 5 4h14l1 5"/><path d="M4 9h16v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9Z"/><path d="M9 13a3 3 0 0 0 6 0"/></svg>',
+  petition: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h9l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M9 12h6M9 16h6M9 8h3"/></svg>',
+  heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20s-7-4.35-9.5-8.5C.8 8 2.4 4.5 6 4.5c2 0 3.3 1.1 4 2.2.7-1.1 2-2.2 4-2.2 3.6 0 5.2 3.5 3.5 7C19 15.65 12 20 12 20Z"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7Z"/></svg>',
+  youtube: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 7.5s-.2-1.6-.9-2.3c-.8-.9-1.8-.9-2.2-1C15.9 4 12 4 12 4h0s-3.9 0-6.9.2c-.4.1-1.4.1-2.2 1C2.2 5.9 2 7.5 2 7.5S1.8 9.4 1.8 11.2v1.5C1.8 14.6 2 16.5 2 16.5s.2 1.6.9 2.3c.8.9 1.9.9 2.4 1 1.7.2 7.2.2 7.2.2s3.9 0 6.9-.2c.4-.1 1.4-.1 2.2-1 .7-.7.9-2.3.9-2.3s.2-1.9.2-3.7v-1.5c0-1.9-.2-3.8-.2-3.8ZM9.9 14.6V8.9l5.4 2.9-5.4 2.8Z"/></svg>',
+  expand: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>',
+  compress: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v5H3M21 8h-5V3M3 16h5v5M16 21v-5h5"/></svg>'
+};
+
+/* ---------- Modulok (Főoldal rács) ---------- */
+const MODULES = [
+
+  {icon:'map', title:'Térkép + események', desc:'Irodák, események, helyi vállalkozások', status:'open', action:() => {
+    const el = document.getElementById('map-section');
+    if(el) {
+      const container = document.querySelector('.screen');
+      container.scrollTo({ top: el.offsetTop - 20, behavior: 'smooth' });
+    }
+  }},
+  {icon:'calendar', title:'Naptár', desc:'Rendezvények és névnapok', status:'open', action:() => {
+    const el = document.getElementById('map-section');
+    if(el) {
+      const container = document.querySelector('.screen');
+      container.scrollTo({ top: el.offsetTop - 20, behavior: 'smooth' });
+    }
+  }},
+
+  {icon:'petition', title:'Petíciók', desc:'Hitelesített, de anonim aláírás', status:'soon'},
+  {icon:'heart', title:'Adomány', desc:'Átlátható hozzájárulás (későbbi fázis)', status:'soon'}
+];
+
+const moduleGrid = document.getElementById('module-grid');
+if (moduleGrid) {
+  MODULES.forEach(m => {
+    const el = document.createElement('div');
+    el.className = 'module-card' + (m.status === 'soon' ? ' locked' : '');
+    el.innerHTML = `
+      <div class="module-icon">${ICONS[m.icon] || ''}</div>
+      ${m.status === 'soon' ? `<div class="module-lock">${ICONS.lock}</div>` : ''}
+      <p class="module-title">${m.title}</p>
+      <p class="module-desc">${m.desc}</p>
+      ${m.status === 'open' ? '<div class="module-link">Megnyitás →</div>' : '<div class="module-soon">Hamarosan</div>'}`;
+    if (m.status === 'open' && typeof m.action === 'function') {
+      el.addEventListener('click', m.action);
+    }
+    moduleGrid.appendChild(el);
+  });
+}
+
+/* ---------- Jelölt-carousel ---------- */
+const candidateCarousel = document.getElementById('candidate-carousel');
+const carouselDots = document.getElementById('carousel-dots');
+if (candidateCarousel) {
+  CANDIDATES.forEach(c => {
+    const slide = document.createElement('div');
+    slide.className = 'candidate-slide';
+    slide.innerHTML = `
+      <img src="assets/candidates/${c.img}" alt="${c.name}">
+      <h3>${c.name}</h3>
+      <span class="candidate-chip">📍 ${c.county} vármegye</span>
+      <div class="candidate-role">${c.role}</div>
+      <p class="candidate-desc">${c.desc}</p>`;
+    candidateCarousel.appendChild(slide);
+  });
+}
+if (carouselDots) {
+  CANDIDATES.forEach(() => {
+    const dot = document.createElement('span');
+    carouselDots.appendChild(dot);
+  });
+}
+
+/* ---------- Csatorna-kártyák (YouTube stílus) ---------- */
+['chan-icon-1','chan-icon-2'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = ICONS.youtube;
+});
+['chan-play-1','chan-play-2'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = ICONS.play;
+});
+
+const CHANNEL_MORE_1 = [
+  {title: "Kérdés-felelet a mai ülésről", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+  {title: "Interjú a napi eseményekről", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+  {title: "Sajtótájékoztató összefoglaló", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+  {title: "Frakcióülés – heti kitekintő", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"}
+];
+const CHANNEL_MORE_2 = [
+  {title: "Előzetes: heti összefoglaló", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+  {title: "Helyszíni riport", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+  {title: "Lakossági fórum", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+  {title: "Heti összefoglaló", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"}
+];
+
+function renderChannelMore(containerId, items) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  items.forEach((item, index) => {
+    const videoId = item.url.split('v=')[1] || item.url.split('/').pop();
+    const div = document.createElement('div');
+    div.className = 'channel-more-item';
+    div.style.cursor = 'pointer';
+    // Load mini thumbnail automatically
+    div.innerHTML = `
+      <div class="channel-more-thumb" style="background-image: url('https://img.youtube.com/vi/${videoId}/default.jpg'); background-size: cover; background-position: center;">
+        <div style="position:absolute; inset:0; background:rgba(0,0,0,0.3);"></div>
+        <div style="z-index:2; position:relative;">${ICONS.play}</div>
+      </div>
+      <span>${item.title}</span>`;
+
+    const parentContainer = containerId.replace('chan-more-', 'video-container-');
+
+    div.addEventListener('click', () => {
+      // Update metadata on play
+      const container = document.getElementById(parentContainer);
+      const titleEl = container.parentElement.querySelector('.channel-video-title');
+      if (titleEl) titleEl.textContent = item.title;
+
+      playVideo(parentContainer, videoId);
+      // Removed scrollIntoView to prevent the header from shifting
+    });
+    el.appendChild(div);
+  });
+}
+
+function playVideo(containerId, videoId) {
+  // Stop any other active videos first to save resources
+  document.querySelectorAll('.channel-thumb iframe').forEach(frame => {
+    const parent = frame.parentElement;
+    const oldVideoId = parent.dataset.videoId;
+    if (oldVideoId) {
+       parent.innerHTML = `
+         <div class="channel-badge">ÚJ</div>
+         <div class="custom-play-btn">${ICONS.play}</div>
+         <div class="thumb-overlay"></div>
+         <div class="video-title-overlay">${parent.querySelector('.video-title-overlay')?.textContent || ''}</div>
+       `;
+       parent.onclick = () => playVideo(parent.id, oldVideoId);
+    }
+  });
+
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  container.onclick = null;
+  container.innerHTML = `
+    <iframe
+      src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&widget_referrer=${encodeURIComponent(location.href)}"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen>
+    </iframe>
+  `;
+}
+
+function initThumbnails() {
+  document.querySelectorAll('.channel-thumb[data-video-id]').forEach(el => {
+    const videoId = el.dataset.videoId;
+    if (videoId) {
+      el.style.backgroundImage = `url('https://img.youtube.com/vi/${videoId}/maxresdefault.jpg')`;
+    }
+  });
+  // Play icons
+  ['play-icon-1', 'play-icon-2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = ICONS.play;
+  });
+}
+renderChannelMore('chan-more-1', CHANNEL_MORE_1);
+renderChannelMore('chan-more-2', CHANNEL_MORE_2);
+
+/* ---------- Shorts beépített lejátszó ---------- */
+const ICONS_SHORTS = {
+  play: ICONS.play,
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  volOn: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16.5 8.5a5 5 0 0 1 0 7" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>',
+  volOff: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16 9l4 6M20 9l-4 6" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>',
+  heart: ICONS.heart,
+  comment: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 1 1-3.4-6.5"/><path d="M21 3v6h-6"/></svg>',
+  share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.7 15.8 6.3M8.2 13.3l7.6 4.4"/></svg>',
+  chevronDown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>'
+};
+
+const SHORTS = [
+  {src:'assets/shorts/short1.mp4', poster:'assets/shorts/poster1.jpg', channel:'Mi Hazánk', caption:'Rövid összefoglaló a legfrissebb toborzási kezdeményezésről.'},
+  {src:'assets/shorts/short2.mp4', poster:'assets/shorts/poster2.jpg', channel:'Bűnvadászok', caption:'Pillanatkép egy helyszíni bejárásról.'},
+  {src:'assets/shorts/short3.mp4', poster:'assets/shorts/poster3.jpg', channel:'Toroczkai László', caption:'Rövid interjúrészlet a heti eseményekről.'},
+  {src:'assets/shorts/short4.mp4', poster:'assets/shorts/poster4.jpg', channel:'Mi Hazánk', caption:'A hét kiemelt pillanata egy mondatban.'}
+];
+
+const shortsFabIcon = document.getElementById('shorts-fab-icon');
+if (shortsFabIcon) shortsFabIcon.innerHTML = ICONS_SHORTS.play;
+
+const shortsStage = document.getElementById('shorts-stage');
+const shortsOverlay = document.getElementById('shorts-overlay');
+let shortsIndex = 0;
+let shortsMuted = true;
+
+function buildShortsSlides() {
+  if (!shortsStage) return;
+  shortsStage.innerHTML = '';
+  SHORTS.forEach((s, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'shorts-slide' + (i === 0 ? ' active' : '');
+    slide.dataset.index = i;
+    slide.innerHTML = `
+      <video src="${s.src}" poster="${s.poster}" playsinline muted loop preload="metadata"></video>
+      <div class="shorts-gradient-top"></div>
+      <div class="shorts-gradient-bottom"></div>
+      <div class="shorts-progress">${SHORTS.map(() => '<span><i></i></span>').join('')}</div>
+      <button type="button" class="shorts-close" id="shorts-close-${i}">${ICONS_SHORTS.close}</button>
+      <button type="button" class="shorts-mute" id="shorts-mute-${i}">${ICONS_SHORTS.volOff}</button>
+      <div class="shorts-caption">
+        <p class="ch">${ICONS_SHORTS.play} ${s.channel}</p>
+        <p class="cap">${s.caption}</p>
+      </div>
+      <div class="shorts-actions">
+        <button type="button" class="shorts-like"><span class="a-icon">${ICONS_SHORTS.heart}</span>Tetszik</button>
+        <button type="button"><span class="a-icon">${ICONS_SHORTS.comment}</span>Komment</button>
+        <button type="button"><span class="a-icon">${ICONS_SHORTS.share}</span>Megosztás</button>
+      </div>
+      <div class="shorts-nav-zone">
+        <div class="zone" data-zone="prev"></div>
+        <div class="zone" data-zone="next"></div>
+      </div>
+      <div class="shorts-hint">Koppints fel/le a váltáshoz</div>`;
+    shortsStage.appendChild(slide);
+
+    slide.querySelector(`#shorts-close-${i}`).addEventListener('click', closeShorts);
+    slide.querySelector(`#shorts-mute-${i}`).addEventListener('click', toggleShortsMute);
+    slide.querySelector('.shorts-like').addEventListener('click', (e) => {
+      e.currentTarget.classList.toggle('liked');
+    });
+    slide.querySelectorAll('.shorts-nav-zone .zone').forEach(zone => {
+      zone.addEventListener('click', () => {
+        if (zone.dataset.zone === 'next') goToShort(shortsIndex + 1);
+        else goToShort(shortsIndex - 1);
+      });
+    });
+  });
+}
+
+function updateProgressUI() {
+  document.querySelectorAll('.shorts-slide').forEach(slide => {
+    const idx = Number(slide.dataset.index);
+    slide.querySelectorAll('.shorts-progress span').forEach((bar, i) => {
+      bar.classList.toggle('done', i < idx || (idx === shortsIndex && i < shortsIndex));
+    });
+  });
+}
+
+function goToShort(newIndex) {
+  if (newIndex < 0 || newIndex >= SHORTS.length) return;
+  const slides = document.querySelectorAll('.shorts-slide');
+  slides.forEach(s => {
+    const video = s.querySelector('video');
+    s.classList.toggle('active', Number(s.dataset.index) === newIndex);
+    if (Number(s.dataset.index) === newIndex) {
+      video.currentTime = 0;
+      video.muted = shortsMuted;
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  });
+  shortsIndex = newIndex;
+  updateProgressUI();
+}
+
+function openShorts() {
+  if (!shortsOverlay) return;
+  buildShortsSlides();
+  shortsIndex = 0;
+  shortsOverlay.classList.add('open');
+  const firstVideo = shortsStage.querySelector('.shorts-slide[data-index="0"] video');
+  if (firstVideo) {
+    firstVideo.muted = shortsMuted;
+    firstVideo.play().catch(() => {});
+  }
+}
+
+function closeShorts() {
+  if (!shortsOverlay) return;
+  shortsOverlay.classList.remove('open');
+  document.querySelectorAll('#shorts-stage video').forEach(v => v.pause());
+}
+
+function toggleShortsMute() {
+  shortsMuted = !shortsMuted;
+  document.querySelectorAll('#shorts-stage video').forEach(v => { v.muted = shortsMuted; });
+  document.querySelectorAll('.shorts-mute').forEach(btn => {
+    btn.innerHTML = shortsMuted ? ICONS_SHORTS.volOff : ICONS_SHORTS.volOn;
+  });
+}
+
+const shortsFab = document.getElementById('shorts-fab');
+if (shortsFab) shortsFab.addEventListener('click', openShorts);
+
+/* Függőleges swipe a mobil élményhez */
+let shortsTouchStartY = null;
+if (shortsStage) {
+  shortsStage.addEventListener('touchstart', (e) => {
+    shortsTouchStartY = e.touches[0].clientY;
+  }, {passive:true});
+  shortsStage.addEventListener('touchend', (e) => {
+    if (shortsTouchStartY === null) return;
+    const dy = e.changedTouches[0].clientY - shortsTouchStartY;
+    if (Math.abs(dy) > 40) {
+      if (dy < 0) goToShort(shortsIndex + 1);
+      else goToShort(shortsIndex - 1);
+    }
+    shortsTouchStartY = null;
+  }, {passive:true});
+}
+
+const newsList = document.getElementById('news-list');
+if (newsList) {
+  NEWS.forEach((a) => {
+    const el = document.createElement('div');
+    el.className = 'news-card';
+    el.innerHTML = `
+      <div class="news-thumb"><img src="assets/news/${a.icon}" alt=""></div>
+      <div>
+        <div class="news-meta"><span>${a.category}</span><span class="dot"></span><span class="date">${a.date}</span></div>
+        <div class="news-title">${a.title}</div>
+        <div class="news-summary">${a.summary}</div>
+      </div>`;
+    el.addEventListener('click', () => openDetail(a));
+    newsList.appendChild(el);
+  });
+}
+
+/* ---------- Főoldali térkép (Leaflet + OpenStreetMap, ingyenes, API kulcs nélkül) ---------- */
+/* Ide írd be a saját, valós helyszíneidet: lat/lng koordináták.
+   type: 'hq' (székhely, zöld), 'shop' (kék), 'event' (piros) — ugyanaz a
+   színkódolás, mint a régi statikus pöttyöknél volt. */
+const MAP_LOCATIONS = [
+  { lat: 47.4979, lng: 19.0402, type: 'hq',    label: 'Székház — Deák Ferenc tér' },
+  { lat: 47.5104, lng: 19.0555, type: 'shop',  label: 'Iroda — Nyugati tér' },
+  { lat: 47.4762, lng: 19.0455, type: 'shop',  label: 'Iroda — Móricz Zsigmond körtér' },
+  { lat: 47.5286, lng: 19.0461, type: 'event', label: 'Esemény — Margit-sziget' }
+];
+
+const MAP_PIN_COLORS = { hq: '#1F3A0D', shop: '#2E5FA3', event: '#D3231F' };
+
+let homeMapInstance = null;
+
+function initHomeMap() {
+  const el = document.getElementById('map-preview');
+  const wrapper = document.getElementById('map-preview-wrapper');
+  if (!el || !wrapper || typeof L === 'undefined') return;
+
+  // Set icons for control buttons
+  const expandBtn = wrapper.querySelector('.map-expand-btn');
+  const backBtn = wrapper.querySelector('.map-back-btn');
+  if (expandBtn) expandBtn.innerHTML = ICONS.expand;
+  if (backBtn) backBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>';
+
+  if (homeMapInstance) {
+    homeMapInstance.invalidateSize();
+    return;
+  }
+
+  const map = L.map(el, {
+    zoomControl: false,
+    attributionControl: true
+  }).setView([47.4979, 19.0402], 12); // Center on Budapest
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  const markerBounds = [];
+  MAP_LOCATIONS.forEach(loc => {
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="display: flex; flex-direction: column; align-items: center;">
+        <svg width="30" height="40" viewBox="0 0 24 24" fill="${MAP_PIN_COLORS[loc.type]}" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 0C7.58 0 4 3.58 4 8C4 13.54 12 24 12 24C12 24 20 13.54 20 8C20 3.58 16.42 0 12 0ZM12 11C10.34 11 9 9.66 9 8C9 6.34 10.34 5 12 5C13.66 5 15 6.34 15 8C15 9.66 13.66 11 12 11Z"/>
+        </svg>
+      </div>`,
+      iconSize: [30, 40],
+      iconAnchor: [15, 40],
+      popupAnchor: [0, -35]
+    });
+    L.marker([loc.lat, loc.lng], { icon }).addTo(map).bindPopup(loc.label);
+    markerBounds.push([loc.lat, loc.lng]);
+  });
+
+  map.fitBounds(markerBounds, { padding: [24, 24] });
+  homeMapInstance = map;
+}
+window.initHomeMap = initHomeMap;
+
+function toggleMapFullscreen(enable) {
+  const wrapper = document.getElementById('map-preview-wrapper');
+  if (!wrapper || !homeMapInstance) return;
+
+  if (enable) {
+    wrapper.classList.add('fullscreen');
+  } else {
+    wrapper.classList.remove('fullscreen');
+  }
+
+  // Use a faster update and ensure it triggers multiple times during transition
+  let count = 0;
+  const interval = setInterval(() => {
+    homeMapInstance.invalidateSize();
+    count++;
+    if (count > 10) clearInterval(interval);
+  }, 50);
+}
+window.toggleMapFullscreen = toggleMapFullscreen;
+
+const candGrid = document.getElementById('cand-grid');
+const candidateEmpty = document.getElementById('candidate-empty');
+const candidateSearch = document.getElementById('candidate-search');
+const filterToggle = document.getElementById('filter-toggle');
+const filterPanel = document.getElementById('filter-panel');
+const filterChips = document.getElementById('filter-chips');
+let selectedCounty = 'Összes';
+
+function renderCountyFilters() {
+  if (!filterChips) return;
+  filterChips.innerHTML = '';
+  COUNTIES.forEach(county => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'filter-chip' + (county === selectedCounty ? ' active' : '');
+    chip.textContent = county;
+    chip.addEventListener('click', () => {
+      selectedCounty = county;
+      renderCountyFilters();
+      renderCandidates(candidateSearch ? candidateSearch.value : '', selectedCounty);
+    });
+    filterChips.appendChild(chip);
+  });
+}
+
+function renderCandidates(query = '', county = selectedCounty) {
+  if (!candGrid) return;
+  const normalized = query.trim().toLowerCase();
+  const filtered = CANDIDATES.filter(candidate => {
+    const matchesName = candidate.name.toLowerCase().includes(normalized);
+    const matchesCounty = county === 'Összes' || candidate.county === county;
+    return matchesName && matchesCounty;
+  });
+  candGrid.innerHTML = '';
+  filtered.forEach(c => {
+    const el = document.createElement('div');
+    el.className = 'cand-card';
+    el.innerHTML = `
+      <img class="cand-photo" src="assets/candidates/${c.img}" alt="${c.name}">
+      <div class="cand-name">${c.name}</div>
+      <div class="cand-role">${c.role}</div>`;
+    candGrid.appendChild(el);
+  });
+  if (candidateEmpty) {
+    const showEmptyState = normalized.length > 0 && filtered.length === 0;
+    candidateEmpty.hidden = !showEmptyState;
+    candidateEmpty.textContent = 'Nem található ilyen név a jelenlegi listában.';
+  }
+}
+
+if (candidateSearch) {
+  candidateSearch.addEventListener('input', (event) => renderCandidates(event.target.value, selectedCounty));
+}
+
+if (filterToggle && filterPanel) {
+  filterToggle.addEventListener('click', () => {
+    filterPanel.classList.toggle('open');
+  });
+  document.addEventListener('click', (event) => {
+    if (!filterPanel.contains(event.target) && !filterToggle.contains(event.target)) {
+      filterPanel.classList.remove('open');
+    }
+  });
+}
+
+renderCountyFilters();
+renderCandidates();
+
+function showSocialSubview(viewName) {
+  document.querySelectorAll('.social-subview').forEach(view => {
+    view.classList.toggle('active', view.id === `social-subview-${viewName}`);
+  });
+  document.querySelectorAll('.social-bottom-bar button').forEach(button => {
+    button.classList.toggle('active', button.dataset.socialView === viewName);
+  });
+}
+
+document.querySelectorAll('.social-bottom-bar button').forEach(button => {
+  button.addEventListener('click', () => showSocialSubview(button.dataset.socialView || 'home'));
+});
+
+showSocialSubview('home');
+
+function openDetail(a){
+  document.getElementById('detail-cat').textContent = a.category;
+  document.getElementById('detail-title').textContent = a.title;
+  document.getElementById('detail-src').textContent = a.source + ' · ' + a.date;
+  document.getElementById('detail-text').textContent = a.summary + ' (A teljes cikk ide kerülne a végleges appban.)';
+  document.getElementById('detail').classList.add('open');
+}
+document.getElementById('back-btn').addEventListener('click', () => {
+  document.getElementById('detail').classList.remove('open');
+});
+
+function setTab(tab){
+  if (!tab) return;
+  const tabButtons = document.querySelectorAll('button[data-tab]');
+  const views = document.querySelectorAll('.view');
+  const phone = document.querySelector('.phone');
+  const headerTitle = document.querySelector('.header-title');
+  const filterToggle = document.getElementById('filter-toggle');
+  const filterPanel = document.getElementById('filter-panel');
+  const titles = {
+    social: 'Social Media',
+    fooldal: 'Főoldal',
+    kepviseloink: 'Képviselőink',
+    hirek: 'Bűnvadászok',
+    jeloltek: 'Pajtárstábor',
+    rolunk: 'Rólunk',
+    egyeb: 'Egyéb'
+  };
+
+  tabButtons.forEach(button => {
+    button.classList.toggle('active', button.dataset.tab === tab);
+  });
+  views.forEach(view => {
+    view.classList.toggle('active', view.id === 'view-' + tab);
+  });
+
+  headerTitle.textContent = titles[tab] || 'Főoldal';
+  if (filterToggle) {
+    filterToggle.hidden = tab !== 'kepviseloink';
+  }
+  if (filterPanel) {
+    filterPanel.classList.remove('open');
+  }
+
+  // Stop videos when leaving social tab
+  if (tab !== 'social') {
+    document.querySelectorAll('.channel-thumb iframe').forEach(frame => {
+      const parent = frame.parentElement;
+      const vid = parent.dataset.videoId;
+      if (vid) {
+        parent.innerHTML = `
+          <div class="channel-badge">ÚJ</div>
+          <div class="custom-play-btn">${ICONS.play}</div>
+          <div class="thumb-overlay"></div>
+          <div class="video-title-overlay">${parent.querySelector('.video-title-overlay')?.textContent || ''}</div>
+        `;
+        parent.onclick = () => playVideo(parent.id, vid);
+      }
+    });
+  }
+
+  if (tab === 'fooldal') {
+    // A .view-fooldal csak most válik láthatóvá, a Leaflet térképnek ekkor
+    // kell felépülnie / méretet frissítenie, különben 0×0-s maradna.
+    requestAnimationFrame(() => { if (typeof initHomeMap === 'function') initHomeMap(); });
+  }
+}
+
+window.setTab = setTab;
+
+// Ensure everything is loaded before initializing
+window.addEventListener('load', () => {
+  initThumbnails();
+  setTab('fooldal');
+});
+</script>
+
+<!-- Removed redundant script tag from here -->
+</body>
+</html>
